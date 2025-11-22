@@ -1,0 +1,13 @@
+2025-10-07 16:40:35.037 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 44072 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-10-07 16:40:35.038 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-10-07 16:40:35.968 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-10-07 16:40:35.983 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-10-07 16:40:35.984 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-10-07 16:40:35.985 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-10-07 16:40:36.029 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-10-07 16:40:36.029 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 951 ms
+2025-10-07 16:40:36.729 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-10-07 16:40:36.748 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-10-07 16:40:36.753 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 2.101 seconds (process running for 3.008)
+2025-10-07 16:40:43.652 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-10-07 16:40:43.658 [tomcat-shutdown] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Graceful shutdown complete

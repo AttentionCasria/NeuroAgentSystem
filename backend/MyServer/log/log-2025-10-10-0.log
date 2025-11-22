@@ -1,0 +1,32 @@
+2025-10-10 20:59:17.891 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 30752 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-10-10 20:59:17.893 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-10-10 20:59:18.744 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-10-10 20:59:18.759 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-10-10 20:59:18.760 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-10-10 20:59:18.760 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-10-10 20:59:18.811 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-10-10 20:59:18.811 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 883 ms
+2025-10-10 20:59:19.419 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-10-10 20:59:19.435 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-10-10 20:59:19.440 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 1.883 seconds (process running for 2.662)
+2025-10-10 21:02:09.837 [http-nio-8080-exec-2] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-10-10 21:02:09.837 [http-nio-8080-exec-2] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-10-10 21:02:09.838 [http-nio-8080-exec-2] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2025-10-10 21:02:09.895 [http-nio-8080-exec-2] INFO  com.it.interceptor.Tokeninterceptor - token解析失败
+2025-10-10 21:03:52.373 [http-nio-8080-exec-1] INFO  com.it.interceptor.Tokeninterceptor - token解析失败
+2025-10-10 21:04:25.642 [http-nio-8080-exec-3] INFO  com.it.interceptor.Tokeninterceptor - token解析失败
+2025-10-10 21:05:07.715 [http-nio-8080-exec-5] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-10-10 21:05:07.977 [http-nio-8080-exec-5] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-10-10 21:05:08.698 [http-nio-8080-exec-5] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@30d2cb69
+2025-10-10 21:05:08.703 [http-nio-8080-exec-5] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-10-10 21:05:14.647 [http-nio-8080-exec-7] INFO  com.it.controller.QuesController - 用户使用流式响应询问信息: 我头疼，口吐白沫，是什么病？
+2025-10-10 21:08:18.130 [http-nio-8080-exec-8] WARN  o.s.w.s.m.support.DefaultHandlerExceptionResolver - Resolved [org.springframework.web.method.annotation.MethodArgumentTypeMismatchException: Method parameter 'talk_id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Integer'; For input string: "1760101674630"]
+2025-10-10 21:08:37.285 [http-nio-8080-exec-9] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-10-10 21:10:32.007 [http-nio-8080-exec-1] INFO  com.it.controller.QuesController - 用户使用流式响应询问信息: 我四肢抽搐，头晕脑胀，是什么病？
+2025-10-10 21:16:15.209 [http-nio-8080-exec-2] INFO  com.it.interceptor.Tokeninterceptor - token不存在
+2025-10-10 21:31:22.157 [http-nio-8080-exec-5] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-10-10 21:31:44.443 [http-nio-8080-exec-8] INFO  com.it.controller.QuesController - 用户使用流式响应询问信息: 我头疼，四肢抽搐，是什么病？
+2025-10-10 21:36:26.873 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-10-10 21:36:26.893 [tomcat-shutdown] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-10-10 21:36:26.923 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2025-10-10 21:36:26.943 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.

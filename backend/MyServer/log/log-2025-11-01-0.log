@@ -1,0 +1,501 @@
+2025-11-01 17:27:37.640 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 41220 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-11-01 17:27:37.641 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-11-01 17:27:38.509 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-11-01 17:27:38.521 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:27:38.522 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-11-01 17:27:38.524 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-11-01 17:27:38.565 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-11-01 17:27:38.565 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 883 ms
+2025-11-01 17:27:39.220 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:27:39.234 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-11-01 17:27:39.239 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 1.955 seconds (process running for 2.691)
+2025-11-01 17:28:40.959 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-01 17:28:40.978 [tomcat-shutdown] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-11-01 17:28:43.430 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 15064 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-11-01 17:28:43.431 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-11-01 17:28:44.080 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-11-01 17:28:44.090 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:28:44.091 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-11-01 17:28:44.092 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-11-01 17:28:44.124 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-11-01 17:28:44.124 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 662 ms
+2025-11-01 17:28:44.613 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:28:44.630 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-11-01 17:28:44.636 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 1.484 seconds (process running for 2.008)
+2025-11-01 17:30:01.670 [http-nio-8080-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-01 17:30:01.670 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-11-01 17:30:01.671 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2025-11-01 17:30:01.699 [http-nio-8080-exec-1] INFO  com.it.interceptor.Tokeninterceptor - token不存在
+2025-11-01 17:30:03.815 [http-nio-8080-exec-2] INFO  com.it.interceptor.Tokeninterceptor - token不存在
+2025-11-01 17:30:15.970 [http-nio-8080-exec-3] INFO  com.it.interceptor.Tokeninterceptor - token不存在
+2025-11-01 17:30:25.449 [http-nio-8080-exec-4] INFO  com.it.interceptor.Tokeninterceptor - token解析失败
+2025-11-01 17:30:33.769 [http-nio-8080-exec-5] INFO  com.it.interceptor.Tokeninterceptor - token不存在
+2025-11-01 17:30:48.729 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-01 17:30:48.736 [tomcat-shutdown] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-11-01 17:31:34.360 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 30384 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-11-01 17:31:34.363 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-11-01 17:31:35.167 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-11-01 17:31:35.181 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:31:35.182 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-11-01 17:31:35.183 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-11-01 17:31:35.229 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-11-01 17:31:35.229 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 826 ms
+2025-11-01 17:31:35.799 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:31:35.814 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-11-01 17:31:35.822 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 1.75 seconds (process running for 2.312)
+2025-11-01 17:31:53.619 [http-nio-8080-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-01 17:31:53.619 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-11-01 17:31:53.620 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 0 ms
+2025-11-01 17:31:53.655 [http-nio-8080-exec-1] INFO  com.it.interceptor.Tokeninterceptor - token不存在
+2025-11-01 17:32:14.746 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-01 17:32:14.751 [tomcat-shutdown] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-11-01 17:34:11.754 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 34624 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-11-01 17:34:11.754 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-11-01 17:34:12.516 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-11-01 17:34:12.526 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:34:12.528 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-11-01 17:34:12.529 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-11-01 17:34:12.567 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-11-01 17:34:12.568 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 779 ms
+2025-11-01 17:34:13.071 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:34:13.084 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-11-01 17:34:13.090 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 1.615 seconds (process running for 2.206)
+2025-11-01 17:35:20.049 [http-nio-8080-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-01 17:35:20.049 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-11-01 17:35:20.050 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2025-11-01 17:35:20.074 [http-nio-8080-exec-1] INFO  com.it.interceptor.Tokeninterceptor - token不存在
+2025-11-01 17:35:47.043 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-01 17:35:47.051 [tomcat-shutdown] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-11-01 17:36:08.786 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 3380 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-11-01 17:36:08.787 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-11-01 17:36:09.579 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-11-01 17:36:09.593 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:36:09.595 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-11-01 17:36:09.596 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-11-01 17:36:09.637 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-11-01 17:36:09.638 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 819 ms
+2025-11-01 17:36:10.173 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:36:10.187 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-11-01 17:36:10.192 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 1.693 seconds (process running for 2.273)
+2025-11-01 17:36:53.937 [http-nio-8080-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-01 17:36:53.938 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-11-01 17:36:53.939 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2025-11-01 17:36:54.062 [http-nio-8080-exec-1] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-11-01 17:36:58.109 [http-nio-8080-exec-2] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-11-01 17:36:58.179 [http-nio-8080-exec-2] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-11-01 17:36:58.427 [http-nio-8080-exec-2] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@3d18f80c
+2025-11-01 17:36:58.429 [http-nio-8080-exec-2] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-11-01 17:36:58.527 [http-nio-8080-exec-2] INFO  com.it.controller.LoginController - 注册用户:User(id=null, name=QSZ, password=123456, image=https://darkside.oss-cn-beijing.aliyuncs.com/2025/11/3974233a-006d-41d0-83dd-b92f595db149.jpg, createTime=2025-11-01 17:36:58, updateTime=2025-11-01 17:36:58)
+2025-11-01 17:36:58.626 [http-nio-8080-exec-3] INFO  com.it.interceptor.Tokeninterceptor - token解析失败
+2025-11-01 17:37:47.929 [http-nio-8080-exec-4] INFO  com.it.interceptor.Tokeninterceptor - token解析失败
+2025-11-01 17:37:47.978 [http-nio-8080-exec-5] INFO  com.it.interceptor.Tokeninterceptor - token解析失败
+2025-11-01 17:38:47.338 [http-nio-8080-exec-6] INFO  com.it.interceptor.Tokeninterceptor - token解析失败
+2025-11-01 17:38:47.389 [http-nio-8080-exec-7] INFO  com.it.interceptor.Tokeninterceptor - token解析失败
+2025-11-01 17:40:50.793 [http-nio-8080-exec-8] INFO  com.it.interceptor.Tokeninterceptor - token解析失败
+2025-11-01 17:42:20.031 [http-nio-8080-exec-9] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-11-01 17:42:28.303 [http-nio-8080-exec-1] INFO  com.it.controller.QuesController - 用户使用流式响应询问信息: 你好，我头疼
+2025-11-01 17:43:05.777 [http-nio-8080-exec-1] ERROR com.it.controller.QuesController - 流式响应处理失败
+org.springframework.dao.DataIntegrityViolationException: 
+### Error updating database.  Cause: java.sql.SQLIntegrityConstraintViolationException: Column 'title' cannot be null
+### The error may exist in com/it/mapper/QuesMapper.xml
+### The error may involve defaultParameterMap
+### The error occurred while setting parameters
+### SQL: insert into talk (user_id, title, content, create_time, update_time)         values (?, ?, ?, ?, ?)
+### Cause: java.sql.SQLIntegrityConstraintViolationException: Column 'title' cannot be null
+; Column 'title' cannot be null
+	at org.springframework.jdbc.support.SQLExceptionSubclassTranslator.doTranslate(SQLExceptionSubclassTranslator.java:97)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:107)
+	at org.springframework.jdbc.support.AbstractFallbackSQLExceptionTranslator.translate(AbstractFallbackSQLExceptionTranslator.java:116)
+	at org.mybatis.spring.MyBatisExceptionTranslator.translateExceptionIfPossible(MyBatisExceptionTranslator.java:95)
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:347)
+	at jdk.proxy2/jdk.proxy2.$Proxy70.insert(Unknown Source)
+	at org.mybatis.spring.SqlSessionTemplate.insert(SqlSessionTemplate.java:224)
+	at org.apache.ibatis.binding.MapperMethod.execute(MapperMethod.java:62)
+	at org.apache.ibatis.binding.MapperProxy$PlainMethodInvoker.invoke(MapperProxy.java:141)
+	at org.apache.ibatis.binding.MapperProxy.invoke(MapperProxy.java:86)
+	at jdk.proxy2/jdk.proxy2.$Proxy79.insertTalk(Unknown Source)
+	at com.it.service.impl.QuesServiceImpl.getQues(QuesServiceImpl.java:75)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:360)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:380)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:728)
+	at com.it.service.impl.QuesServiceImpl$$SpringCGLIB$$0.getQues(<generated>)
+	at com.it.controller.QuesController.streamingQues(QuesController.java:60)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:258)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:191)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:991)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:896)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:195)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:483)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:116)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:398)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1769)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1189)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:658)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Column 'title' cannot be null
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:109)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.executeInternal(ClientPreparedStatement.java:988)
+	at com.mysql.cj.jdbc.ClientPreparedStatement.execute(ClientPreparedStatement.java:383)
+	at com.zaxxer.hikari.pool.ProxyPreparedStatement.execute(ProxyPreparedStatement.java:44)
+	at com.zaxxer.hikari.pool.HikariProxyPreparedStatement.execute(HikariProxyPreparedStatement.java)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.apache.ibatis.logging.jdbc.PreparedStatementLogger.invoke(PreparedStatementLogger.java:58)
+	at jdk.proxy3/jdk.proxy3.$Proxy87.execute(Unknown Source)
+	at org.apache.ibatis.executor.statement.PreparedStatementHandler.update(PreparedStatementHandler.java:48)
+	at org.apache.ibatis.executor.statement.RoutingStatementHandler.update(RoutingStatementHandler.java:75)
+	at org.apache.ibatis.executor.SimpleExecutor.doUpdate(SimpleExecutor.java:50)
+	at org.apache.ibatis.executor.BaseExecutor.update(BaseExecutor.java:117)
+	at org.apache.ibatis.executor.CachingExecutor.update(CachingExecutor.java:76)
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.update(DefaultSqlSession.java:197)
+	at org.apache.ibatis.session.defaults.DefaultSqlSession.insert(DefaultSqlSession.java:184)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.mybatis.spring.SqlSessionTemplate$SqlSessionInterceptor.invoke(SqlSessionTemplate.java:333)
+	... 66 common frames omitted
+2025-11-01 17:43:50.751 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-01 17:43:50.755 [tomcat-shutdown] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-11-01 17:43:50.759 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2025-11-01 17:43:50.764 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2025-11-01 17:44:51.917 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 31888 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-11-01 17:44:51.919 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-11-01 17:44:52.741 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-11-01 17:44:52.752 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:44:52.753 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-11-01 17:44:52.753 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-11-01 17:44:52.802 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-11-01 17:44:52.802 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 849 ms
+2025-11-01 17:44:53.439 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:44:53.455 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-11-01 17:44:53.460 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 1.868 seconds (process running for 2.518)
+2025-11-01 17:45:16.540 [http-nio-8080-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-01 17:45:16.540 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-11-01 17:45:16.541 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2025-11-01 17:45:16.603 [http-nio-8080-exec-1] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-11-01 17:45:16.750 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-11-01 17:45:17.268 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@1f76e718
+2025-11-01 17:45:17.270 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-11-01 17:45:53.726 [http-nio-8080-exec-3] INFO  com.it.controller.QuesController - 用户使用流式响应询问信息: 你好，我最近头疼，意识有些时候也很模糊，这是什么病？
+2025-11-01 17:49:45.928 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-01 17:49:45.937 [tomcat-shutdown] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-11-01 17:49:45.942 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2025-11-01 17:49:45.951 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2025-11-01 17:50:15.858 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 47244 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-11-01 17:50:15.860 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-11-01 17:50:16.643 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-11-01 17:50:16.656 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:50:16.658 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-11-01 17:50:16.658 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-11-01 17:50:16.707 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-11-01 17:50:16.707 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 818 ms
+2025-11-01 17:50:17.284 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:50:17.298 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-11-01 17:50:17.303 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 1.725 seconds (process running for 2.445)
+2025-11-01 17:50:45.698 [http-nio-8080-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-01 17:50:45.698 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-11-01 17:50:45.699 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2025-11-01 17:50:45.729 [http-nio-8080-exec-1] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-11-01 17:50:45.838 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-11-01 17:50:46.348 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@2b382477
+2025-11-01 17:50:46.350 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-11-01 17:50:46.431 [http-nio-8080-exec-1] ERROR o.a.c.c.C.[.[localhost].[/].[dispatcherServlet] - Servlet.service() for servlet [dispatcherServlet] in context with path [] threw exception [Request processing failed: java.lang.RuntimeException: 用户不存在] with root cause
+java.lang.RuntimeException: 用户不存在
+	at com.it.service.impl.LoginServiceImpl.loginInto(LoginServiceImpl.java:24)
+	at com.it.controller.LoginController.login(LoginController.java:43)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:258)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:191)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:991)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:896)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:195)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:483)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:116)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:398)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1769)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1189)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:658)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2025-11-01 17:50:46.441 [http-nio-8080-exec-1] INFO  com.it.interceptor.Tokeninterceptor - token不存在
+2025-11-01 17:51:19.647 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-01 17:51:19.654 [tomcat-shutdown] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-11-01 17:51:19.660 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2025-11-01 17:51:19.669 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2025-11-01 17:51:53.232 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 14544 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-11-01 17:51:53.234 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-11-01 17:51:53.999 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-11-01 17:51:54.009 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:51:54.010 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-11-01 17:51:54.010 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-11-01 17:51:54.047 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-11-01 17:51:54.047 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 780 ms
+2025-11-01 17:51:54.576 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:51:54.591 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-11-01 17:51:54.596 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 1.65 seconds (process running for 2.287)
+2025-11-01 17:52:33.526 [http-nio-8080-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-01 17:52:33.527 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-11-01 17:52:33.527 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 0 ms
+2025-11-01 17:52:33.562 [http-nio-8080-exec-1] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-11-01 17:52:33.683 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-11-01 17:52:34.074 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@1f76e718
+2025-11-01 17:52:34.077 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-11-01 17:53:08.021 [http-nio-8080-exec-4] INFO  com.it.controller.QuesController - 用户使用流式响应询问信息: 我最近头疼，偶尔意识模糊，这是什么病？
+2025-11-01 17:58:40.999 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-01 17:58:41.005 [tomcat-shutdown] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-11-01 17:58:41.009 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2025-11-01 17:58:41.026 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2025-11-01 17:59:55.742 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 6644 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-11-01 17:59:55.743 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-11-01 17:59:56.439 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-11-01 17:59:56.447 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:59:56.448 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-11-01 17:59:56.448 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-11-01 17:59:56.486 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-11-01 17:59:56.486 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 710 ms
+2025-11-01 17:59:56.932 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-11-01 17:59:56.944 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-11-01 17:59:56.948 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 1.448 seconds (process running for 1.965)
+2025-11-01 18:00:10.979 [http-nio-8080-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-01 18:00:10.979 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-11-01 18:00:10.979 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 0 ms
+2025-11-01 18:00:11.062 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-11-01 18:00:11.284 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@33d59ec9
+2025-11-01 18:00:11.285 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-11-01 18:00:25.448 [http-nio-8080-exec-5] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-11-01 18:00:25.487 [http-nio-8080-exec-5] ERROR o.a.c.c.C.[.[localhost].[/].[dispatcherServlet] - Servlet.service() for servlet [dispatcherServlet] in context with path [] threw exception [Request processing failed: java.lang.RuntimeException: 用户不存在] with root cause
+java.lang.RuntimeException: 用户不存在
+	at com.it.service.impl.LoginServiceImpl.loginInto(LoginServiceImpl.java:24)
+	at com.it.controller.LoginController.login(LoginController.java:43)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:258)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:191)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:991)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:896)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885)
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:195)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:164)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:140)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:483)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:116)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:398)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1769)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1189)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:658)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2025-11-01 18:00:25.497 [http-nio-8080-exec-5] INFO  com.it.interceptor.Tokeninterceptor - token不存在
+2025-11-01 18:31:08.692 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-01 18:31:08.699 [tomcat-shutdown] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-11-01 18:31:08.708 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2025-11-01 18:31:08.712 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2025-11-01 18:31:13.489 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 14832 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-11-01 18:31:13.491 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-11-01 18:31:14.311 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-11-01 18:31:14.322 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-11-01 18:31:14.323 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-11-01 18:31:14.324 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-11-01 18:31:14.363 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-11-01 18:31:14.364 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 842 ms
+2025-11-01 18:31:14.888 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-11-01 18:31:14.904 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-11-01 18:31:14.910 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 1.717 seconds (process running for 2.397)
+2025-11-01 18:31:25.928 [http-nio-8080-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-01 18:31:25.928 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-11-01 18:31:25.928 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 0 ms
+2025-11-01 18:31:25.949 [http-nio-8080-exec-1] INFO  com.it.interceptor.Tokeninterceptor - token不存在
+2025-11-01 18:31:38.278 [http-nio-8080-exec-2] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-11-01 18:31:38.400 [http-nio-8080-exec-2] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-11-01 18:31:38.828 [http-nio-8080-exec-2] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@4451d8ed
+2025-11-01 18:31:38.833 [http-nio-8080-exec-2] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-11-01 18:32:02.978 [http-nio-8080-exec-3] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-11-01 18:32:18.951 [http-nio-8080-exec-4] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-11-01 18:32:30.472 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-01 18:32:30.481 [tomcat-shutdown] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-11-01 18:32:30.485 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2025-11-01 18:32:30.492 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2025-11-01 20:23:09.367 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 37664 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-11-01 20:23:09.369 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-11-01 20:23:10.272 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-11-01 20:23:10.283 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-11-01 20:23:10.285 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-11-01 20:23:10.286 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-11-01 20:23:10.327 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-11-01 20:23:10.327 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 929 ms
+2025-11-01 20:23:10.945 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-11-01 20:23:10.965 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-11-01 20:23:10.970 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 1.987 seconds (process running for 2.758)
+2025-11-01 20:23:21.278 [http-nio-8080-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-01 20:23:21.278 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-11-01 20:23:21.279 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2025-11-01 20:23:21.365 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-11-01 20:23:21.778 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@33d59ec9
+2025-11-01 20:23:21.780 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-11-01 20:24:01.379 [http-nio-8080-exec-3] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-11-01 20:24:04.207 [http-nio-8080-exec-4] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-11-01 20:24:04.327 [http-nio-8080-exec-4] INFO  com.it.controller.LoginController - 注册用户:User(id=null, name=rrr, password=123456, image=https://darkside.oss-cn-beijing.aliyuncs.com/2025/11/81da2842-d861-47aa-ba45-02433e68d05f.jpg, createTime=2025-11-01 20:24:04, updateTime=2025-11-01 20:24:04)
+2025-11-01 20:24:04.362 [http-nio-8080-exec-5] INFO  com.it.interceptor.Tokeninterceptor - token解析失败
+2025-11-01 20:24:19.700 [http-nio-8080-exec-6] INFO  com.it.interceptor.Tokeninterceptor - token解析失败
+2025-11-01 20:24:19.751 [http-nio-8080-exec-7] INFO  com.it.interceptor.Tokeninterceptor - token解析失败
+2025-11-01 20:25:13.015 [http-nio-8080-exec-8] INFO  com.it.interceptor.Tokeninterceptor - token解析失败
+2025-11-01 20:25:13.065 [http-nio-8080-exec-9] INFO  com.it.interceptor.Tokeninterceptor - token解析失败
+2025-11-01 20:35:09.017 [http-nio-8080-exec-10] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-11-01 20:35:27.367 [http-nio-8080-exec-3] INFO  com.it.controller.QuesController - 用户使用流式响应询问信息: 我头疼，什么病？
+2025-11-01 20:46:51.139 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-01 20:48:00.497 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 14280 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-11-01 20:48:00.498 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-11-01 20:48:01.541 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-11-01 20:48:01.553 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-11-01 20:48:01.555 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-11-01 20:48:01.556 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-11-01 20:48:01.598 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-11-01 20:48:01.599 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1067 ms
+2025-11-01 20:48:02.125 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-11-01 20:48:02.141 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-11-01 20:48:02.146 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 1.954 seconds (process running for 2.562)
+2025-11-01 20:48:13.055 [http-nio-8080-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-01 20:48:13.056 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-11-01 20:48:13.056 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 0 ms
+2025-11-01 20:48:13.134 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-11-01 20:48:13.400 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@ff29ca4
+2025-11-01 20:48:13.401 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-11-01 20:48:34.288 [http-nio-8080-exec-3] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-11-01 20:48:37.278 [http-nio-8080-exec-4] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-11-01 20:48:37.336 [http-nio-8080-exec-4] INFO  com.it.controller.LoginController - 注册用户:User(id=null, name=qqq, password=123456, image=https://darkside.oss-cn-beijing.aliyuncs.com/2025/11/6712560b-a6c1-4a54-82cd-83503cd2bf51.jpg, createTime=2025-11-01 20:48:37, updateTime=2025-11-01 20:48:37)
+2025-11-01 20:48:37.364 [http-nio-8080-exec-6] INFO  com.it.interceptor.Tokeninterceptor - token解析失败
+2025-11-01 20:54:35.140 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-01 20:54:35.144 [tomcat-shutdown] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-11-01 20:54:35.147 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2025-11-01 20:54:35.151 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2025-11-01 21:10:34.893 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 39520 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-11-01 21:10:34.894 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-11-01 21:10:35.634 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-11-01 21:10:35.645 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-11-01 21:10:35.647 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-11-01 21:10:35.647 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-11-01 21:10:35.686 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-11-01 21:10:35.686 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 762 ms
+2025-11-01 21:10:36.200 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-11-01 21:10:36.214 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-11-01 21:10:36.219 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 1.615 seconds (process running for 2.266)
+2025-11-01 21:11:04.364 [http-nio-8080-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-01 21:11:04.364 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-11-01 21:11:04.366 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 2 ms
+2025-11-01 21:11:04.436 [http-nio-8080-exec-1] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-11-01 21:11:08.523 [http-nio-8080-exec-2] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-11-01 21:11:08.586 [http-nio-8080-exec-2] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-11-01 21:11:08.812 [http-nio-8080-exec-2] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@12a5c48c
+2025-11-01 21:11:08.815 [http-nio-8080-exec-2] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-11-01 21:11:08.908 [http-nio-8080-exec-2] INFO  com.it.controller.LoginController - 注册用户:User(id=9, name=12345667, password=123456, image=https://darkside.oss-cn-beijing.aliyuncs.com/2025/11/62f5a86b-e572-48e4-85c6-904a4ec86562.jpg, createTime=2025-11-01 21:11:08, updateTime=2025-11-01 21:11:08)
+2025-11-01 21:11:44.013 [http-nio-8080-exec-4] INFO  com.it.controller.QuesController - 用户使用流式响应询问信息: 我头疼，并且有些时候意识模糊，有没有什么病？
+2025-11-01 22:12:54.435 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-01 22:12:54.457 [tomcat-shutdown] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-11-01 22:12:54.477 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2025-11-01 22:12:54.487 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.

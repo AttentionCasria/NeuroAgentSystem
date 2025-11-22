@@ -1,0 +1,11 @@
+aiserver:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    host: localhost
+    port: 3306
+    username: root
+    password: Gongyusong666
+  alioss:
+    endpoint: https://oss-cn-beijing.aliyuncs.com
+    bucketName: darkside
+    region: cn-beijing

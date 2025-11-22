@@ -1,0 +1,25 @@
+2025-09-27 19:17:59.399 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 36812 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-09-27 19:17:59.400 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-09-27 19:18:00.332 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-09-27 19:18:00.344 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-09-27 19:18:00.346 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-09-27 19:18:00.346 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-09-27 19:18:00.398 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-09-27 19:18:00.398 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 963 ms
+2025-09-27 19:18:01.048 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-09-27 19:18:01.062 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-09-27 19:18:01.067 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 2.025 seconds (process running for 2.795)
+2025-09-27 19:19:06.340 [http-nio-8080-exec-2] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-09-27 19:19:06.341 [http-nio-8080-exec-2] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-09-27 19:19:06.344 [http-nio-8080-exec-2] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 2 ms
+2025-09-27 19:19:06.402 [http-nio-8080-exec-2] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-09-27 19:19:06.447 [http-nio-8080-exec-2] INFO  com.it.interceptor.Tokeninterceptor - token不存在
+2025-09-27 19:23:35.785 [http-nio-8080-exec-3] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册或者上传图片，准许放行
+2025-09-27 19:23:35.900 [http-nio-8080-exec-3] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-09-27 19:23:36.330 [http-nio-8080-exec-3] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@2f1c6b41
+2025-09-27 19:23:36.332 [http-nio-8080-exec-3] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-09-27 19:25:26.532 [http-nio-8080-exec-9] INFO  com.it.controller.QuesController - 用户在询问信息我心口疼，口吐白沫，这是什么疾病？
+2025-09-27 19:37:11.360 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-09-27 19:37:11.374 [tomcat-shutdown] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-09-27 19:37:11.386 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2025-09-27 19:37:11.405 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.

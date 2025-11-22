@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.it.mapper.InitialPageMapper">
+
+
+    <delete id="deleteTalk">
+        delete t, c from talk t left join cont c on t.id = c.talk_id
+    where t.user_id = #{userId} and t.id = #{talkId}
+    </delete>
+
+</mapper>

@@ -1,0 +1,45 @@
+2025-09-20 13:10:07.679 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 29580 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-09-20 13:10:07.680 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-09-20 13:10:08.891 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-09-20 13:10:08.910 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-09-20 13:10:08.912 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-09-20 13:10:08.913 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-09-20 13:10:08.984 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-09-20 13:10:08.984 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1270 ms
+2025-09-20 13:10:09.774 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-09-20 13:10:09.805 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-09-20 13:10:09.815 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 2.458 seconds (process running for 3.21)
+2025-09-20 13:20:38.487 [http-nio-8080-exec-1] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-09-20 13:20:38.489 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-09-20 13:20:38.493 [http-nio-8080-exec-1] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 4 ms
+2025-09-20 13:20:38.560 [http-nio-8080-exec-1] INFO  com.it.interceptor.Tokeninterceptor - 登陆或者注册，准许放行
+2025-09-20 13:20:38.686 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-09-20 13:20:39.453 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@29b2c123
+2025-09-20 13:20:39.456 [http-nio-8080-exec-1] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-09-20 13:36:48.394 [http-nio-8080-exec-4] INFO  com.it.controller.QuesController - 用户在询问信息我四肢抽搐，这是什么疾病？
+2025-09-20 13:50:10.793 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-09-20 13:50:10.801 [tomcat-shutdown] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-09-20 13:50:10.812 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2025-09-20 13:50:10.821 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2025-09-20 13:51:08.045 [main] INFO  com.it.MyServerApplication - Starting MyServerApplication using Java 21.0.2 with PID 34336 (D:\ideaproject\AIServer\aiServer\MyServer\target\classes started by hp in D:\ideaproject\AIServer)
+2025-09-20 13:51:08.047 [main] INFO  com.it.MyServerApplication - The following 1 profile is active: "dev"
+2025-09-20 13:51:08.896 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2025-09-20 13:51:08.906 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-8080"]
+2025-09-20 13:51:08.908 [main] INFO  org.apache.catalina.core.StandardService - Starting service [Tomcat]
+2025-09-20 13:51:08.908 [main] INFO  org.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-09-20 13:51:08.952 [main] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2025-09-20 13:51:08.953 [main] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 870 ms
+2025-09-20 13:51:09.551 [main] INFO  org.apache.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-8080"]
+2025-09-20 13:51:09.566 [main] INFO  o.s.boot.web.embedded.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path '/'
+2025-09-20 13:51:09.572 [main] INFO  com.it.MyServerApplication - Started MyServerApplication in 1.865 seconds (process running for 2.528)
+2025-09-20 13:52:00.156 [http-nio-8080-exec-2] INFO  o.a.c.core.ContainerBase.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-09-20 13:52:00.156 [http-nio-8080-exec-2] INFO  org.springframework.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2025-09-20 13:52:00.157 [http-nio-8080-exec-2] INFO  org.springframework.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2025-09-20 13:52:00.260 [http-nio-8080-exec-2] INFO  com.it.controller.QuesController - 用户在询问信息我头疼，发烧，四肢无力，这是什么疾病？
+2025-09-20 13:52:00.264 [http-nio-8080-exec-2] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2025-09-20 13:52:00.583 [http-nio-8080-exec-2] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@2d2fd439
+2025-09-20 13:52:00.586 [http-nio-8080-exec-2] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2025-09-20 14:06:49.865 [SpringApplicationShutdownHook] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2025-09-20 14:06:49.872 [tomcat-shutdown] INFO  o.s.boot.web.embedded.tomcat.GracefulShutdown - Graceful shutdown complete
+2025-09-20 14:06:49.877 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2025-09-20 14:06:49.886 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.

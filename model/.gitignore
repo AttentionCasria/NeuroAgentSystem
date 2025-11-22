@@ -1,0 +1,9 @@
+chroma_db/
+chroma_db_unified/
+model_cache/
+__pycache__/
+*.sqlite3
+*.bin
+*.pt
+*.safetensors
+
