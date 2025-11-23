@@ -1,0 +1,60 @@
+# 依赖
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 构建输出
+dist/
+dist-ssr/
+*.local
+
+# 编辑器
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# 日志
+logs/
+*.log
+
+# 操作系统
+Thumbs.db
+.DS_Store
+*.swp
+*.swo
+*~
+
+# 测试
+coverage/
+.nyc_output/
+
+# 临时文件
+*.tmp
+*.temp
+.cache/
+
+# 打包文件
+*.zip
+*.tar.gz
+*.rar
+
+# 其他
+.vercel
+.netlify
+
