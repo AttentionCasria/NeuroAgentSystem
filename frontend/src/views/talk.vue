@@ -1,5 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import UserDialog from '@/components/UserDialog.vue'
 import { useUserStore } from '@/stores/user'
 import { deleteChatAPI, getChatHistoryAPI, getChatTitlesAPI, newChatStreamAPI, sendQuestionStreamAPI } from '@/api/talk'
@@ -18,6 +20,13 @@ const currentTalkList = ref([])    // 当前对话消息列表
 const canSendMessage = ref(true) // 防止重复发送
 
 const loading = ref(false)  // 控制加载中模态框是否展示
+
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+})
+
+const renderMarkdown = (raw = '') => DOMPurify.sanitize(marked.parse(raw || ''))
 
 
 // 页面挂载时拉取历史对话
@@ -195,7 +204,10 @@ function handleUserClick() {
             :key="i"
             class="message"
             :class="{ user: i % 2 === 0 }">
-            {{ msg }}
+            <template v-if="i % 2 === 0">
+              {{ msg }}
+            </template>
+            <div v-else class="markdown-body" v-html="renderMarkdown(msg)"></div>
           </div>
         </div>
         <div v-else class="empty">
@@ -205,12 +217,7 @@ function handleUserClick() {
 
       <!-- 输入区 -->
       <div class="input-box">
-        <input
-          type="text"
-          ref="inputRef"
-          placeholder="请输入您的问题"
-          v-model="message"
-          @keyup.enter="sendMessage" />
+        <input type="text" ref="inputRef" placeholder="请输入您的问题" v-model="message" @keyup.enter="sendMessage" />
         <button class="send-btn" :disabled="message.trim() === '' || !canSendMessage" @click="sendMessage">
           <ArrowSVG color="#fff" size="24" />
         </button>
@@ -371,6 +378,30 @@ function handleUserClick() {
         .message {
           padding: 10px 30px 10px 40px;
           align-self: flex-start;
+          border-radius: 12px;
+          background-color: #2b2b2b;
+          line-height: 1.6;
+
+          .markdown-body {
+            color: #fff;
+            font-size: 15px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+          }
+
+          :deep(.markdown-body pre) {
+            background-color: #1a1a1a;
+            padding: 10px;
+            border-radius: 6px;
+            overflow-x: auto;
+          }
+
+          :deep(.markdown-body code) {
+            font-family: 'Fira Code', 'Consolas', monospace;
+            background-color: #1a1a1a;
+            padding: 2px 4px;
+            border-radius: 4px;
+          }
 
           &.user {
             background-color: #07bf9b;

@@ -35,14 +35,14 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   function (response) {
     NProgress.done()
+    const { data } = response
 
-    if (response.data.code == 1) {
+    if (data.code === 1) {
       console.log('请求成功！', response)
-    } else {
-      return Promise.reject('请求失败，请检查信息是否正确')
+      return data
     }
 
-    return response.data
+    return Promise.reject(data)
   },
   function (error) {
     // 响应错误，关闭进度条

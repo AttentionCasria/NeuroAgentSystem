@@ -17,16 +17,24 @@ async function handleLogin() {
   await form$.value.validate()
   // 校验通过
   if (!form$.value.invalid) {
-    console.log('Login API')
-    const res = await loginAPI(loginFormData.value)
-    userStore.name = res.data.name
-    userStore.image = res.data.image
-    userStore.token = res.data.token
+    try {
+      const res = await loginAPI(loginFormData.value)
+      if (res.code === 1) {
+        userStore.name = res.data.name
+        userStore.image = res.data.image
+        userStore.token = res.data.token
 
-    // 跳转到对话
-    router.replace('/')
+        // 跳转到对话
+        router.replace('/')
+      }
+    } catch (err) {
+      if (err?.code === 0) {
+        alert('密码错误')
+      } else {
+        alert(err?.msg || '登录失败，请稍后再试')
+      }
+    }
   }
-
 }
 </script>
 

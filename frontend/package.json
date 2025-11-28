@@ -16,6 +16,8 @@
   "dependencies": {
     "@vueform/vueform": "^1.13.2",
     "axios": "^1.12.2",
+    "dompurify": "^3.3.0",
+    "marked": "^17.0.1",
     "normalize.css": "^8.0.1",
     "nprogress": "^0.2.0",
     "pinia": "^3.0.3",
