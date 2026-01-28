@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: MyServer
+  profiles:
+    active: dev
+  datasource:
+    url: jdbc:mysql://localhost:3306/medai
+    driver-class-name: ${aiserver.datasource.driver-class-name}
+    username: ${aiserver.datasource.username}
+    password: ${aiserver.datasource.password}
+  mvc:
+    async:
+      request-timeout: 600000   # 单位毫秒，10分钟
+  data:
+    redis:
+      host: 192.168.2.161
+      port: 6379
+      password: 123
+      lettuce:
+        pool:
+          max-active: 10
+          max-idle: 10
+          min-idle: 1
+          time-between-eviction-runs: 10s
+  jackson:
+    default-property-inclusion: non_null # JSON处理时忽略非空字段
+mybatis:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+# 原有配置...
+ai:
+  api:
+    url: http://localhost:8000/model/get_result  # FastAPI 接口地址
+
+alioss:
+  endpoint: ${aiserver.alioss.endpoint}
+  bucketName: ${aiserver.alioss.bucketName}
+  region: ${aiserver.alioss.region}
+
+server:
+  tomcat:
+    connection-timeout: 660s   # 设置请求响应超时为 60 秒
+
+
