@@ -1,0 +1,14 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Maven
+target/
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.env
