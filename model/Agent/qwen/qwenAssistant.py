@@ -1,9 +1,10 @@
 import logging
 import re
 from typing import List, Dict
-
+import traceback
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
+from Agent.qwen.medicalAgent import MedicalReActAgent
 # 【修复】替换失效的函数引用，使用统一检索引擎和配置
 from makeData.dataRetrieve import UnifiedSearchEngine, CONFIG
 
@@ -34,15 +35,42 @@ class MedicalAssistant:
         self.llm = llm
         logger.info("🔧 [MedicalAssistant] 初始化检索引擎...")
         try:
-            # 【新增】初始化检索引擎，适配新的数据检索方式
+            # 1. 初始化检索引擎
+            # 请确保 CONFIG 字典中必须有 'persist_dir' 和 'top_k_per_store' 这两个Key
+            # 否则这里会抛出 KeyError
             self.retriever = UnifiedSearchEngine(
-                persist_dir=CONFIG["persist_dir"],
-                top_k=CONFIG["top_k_per_store"]
+                persist_dir=CONFIG.get("persist_dir", "./chroma_db_unified"),  # 增加默认值防崩
+                top_k=CONFIG.get("top_k_per_store", 4)
             )
-            logger.info("✅ [MedicalAssistant] 检索引擎就绪")
+
+            # 2. 初始化 Agent
+            # 如果 medicalAgent.py 里面有代码错误（如 logger 未定义），这里会报错
+            self.agent = MedicalReActAgent(self.llm, self.retriever)
+
+            logger.info("✅ [MedicalAssistant] 检索引擎与 Agent 就绪")
+
         except Exception as e:
-            logger.error(f"❌ [MedicalAssistant] 检索引擎初始化失败: {e}")
-            raise
+            # 【修改点2】打印完整的堆栈信息！
+            logger.error("❌ [MedicalAssistant] 初始化严重失败，详细堆栈如下：")
+            logger.error(traceback.format_exc())  # <--- 这行代码能告诉你具体死在哪一行
+            # 重新抛出异常，让 main.py 知道启动失败了
+            raise RuntimeError(f"MedicalAssistant Init Failed: {str(e)}")
+
+    # def __init__(self, llm):
+    #     self.llm = llm
+    #     logger.info("🔧 [MedicalAssistant] 初始化检索引擎...")
+    #     try:
+    #         # 【新增】初始化检索引擎，适配新的数据检索方式
+    #         self.retriever = UnifiedSearchEngine(
+    #             persist_dir=CONFIG["persist_dir"],
+    #             top_k=CONFIG["top_k_per_store"]
+    #         )
+    #         # 初始化 Agent
+    #         self.agent = MedicalReActAgent(self.llm, self.retriever)
+    #         logger.info("✅ [MedicalAssistant] 检索引擎就绪")
+    #     except Exception as e:
+    #         logger.error(f"❌ [MedicalAssistant] 检索引擎初始化失败: {e}")
+    #         raise
 
     def decompose_and_diagnose(self, sum_talk: List[str], original_result: str, all_info: str, content: str) -> str:
         """执行分解诊断全流程（带详细日志追踪）"""
@@ -111,21 +139,11 @@ class MedicalAssistant:
         result = self._invoke_llm(self.SYS_DECOMPOSER, prompt)
         return result
 
-    # def _decompose_questions(self, sum_talk: List[str]) -> str:
-    #     """步骤一：生成英文分解问题"""
-    #     prompt_parts = [
-    #         "Given a number of patient complaint summaries (sum_talk), please identify the common symptoms that appear multiple times in these summaries",
-    #         "and based on these commonalities, decompose into 3 clinically relevant sub-questions.",
-    #         "Each sub-question should be expressed as one concise sentence in English.",
-    #         "sum_talk list:",
-    #     ]
-    #     prompt_parts.extend([f"- {talk}" for talk in sum_talk])
-    #     prompt = "\n".join(prompt_parts)
-    #
-    #     result = self._invoke_llm(self.SYS_DECOMPOSER, prompt)
-    #     return result
-
     def _parse_questions(self, raw_text: str) -> List[str]:
+        """解析 LLM 返回的子问题文本"""
+        if not raw_text:
+            return []
+
         """步骤二：解析问题文本结构"""
         questions = []
         for line in raw_text.splitlines():
@@ -153,25 +171,50 @@ class MedicalAssistant:
         return questions
 
     def _retrieve_evidence(self, questions: List[str]) -> Dict[str, str]:
-        """步骤三：使用 UnifiedSearchEngine 进行检索"""
+        """步骤三：改用 Agent 进行动态检索，支持多步思考和工具调用"""
+        # --- 新增逻辑：如果列表为空，直接返回 ---
+        if not questions:
+            logger.info("⚠️ [MedicalAssistant] 检测到无有效子问题，跳过 Agent 检索逻辑。")
+            return {}
+        # ------------------------------------
+
         results = {}
         for i, q in enumerate(questions, 1):
             try:
-                # 增加检索日志
-                logger.info(f"   🔍 [{i}/{len(questions)}] 正在检索: {q}")
+                logger.info(f"🧠 [Agent Loop] 正在处理第 {i} 个子问题: {q}")
 
-                # 调用新的 search 方法
-                docs = self.retriever.search(q, top_k_final=CONFIG.get("top_k_final", 6))
+                # 调用 Agent 的 run 方法
+                # system_prompt 依然使用你定义的 SYS_DECOMPOSER
+                evidence = self.agent.run(
+                    system_prompt=self.SYS_DECOMPOSER,
+                    user_question=q
+                )
 
-                logger.info(f"      -> 找到 {len(docs)} 条相关文献")
-
-                # 将文档内容合并为字符串
-                summary = "\n\n".join([doc.page_content for doc in docs])
+                results[q] = evidence
             except Exception as e:
-                logger.error(f"   ❌ 子问题 '{q}' 检索失败: {e}")
-                summary = f"检索时出错: {e}"
-            results[q] = summary
+                logger.error(f"❌ Agent 处理问题 '{q}' 失败: {e}")
+                results[q] = f"Agent 检索过程中出错: {e}"
         return results
+    # def _retrieve_evidence(self, questions: List[str]) -> Dict[str, str]:
+    #     """步骤三：使用 UnifiedSearchEngine 进行检索"""
+    #     results = {}
+    #     for i, q in enumerate(questions, 1):
+    #         try:
+    #             # 增加检索日志
+    #             logger.info(f"   🔍 [{i}/{len(questions)}] 正在检索: {q}")
+    #
+    #             # 调用新的 search 方法
+    #             docs = self.retriever.search(q, top_k_final=CONFIG.get("top_k_final", 6))
+    #
+    #             logger.info(f"      -> 找到 {len(docs)} 条相关文献")
+    #
+    #             # 将文档内容合并为字符串
+    #             summary = "\n\n".join([doc.page_content for doc in docs])
+    #         except Exception as e:
+    #             logger.error(f"   ❌ 子问题 '{q}' 检索失败: {e}")
+    #             summary = f"检索时出错: {e}"
+    #         results[q] = summary
+    #     return results
 
     def _generate_diagnosis(self, original_result, questions, per_q_results, content, all_info) -> str:
         """步骤四：构建提示词并生成最终诊断"""

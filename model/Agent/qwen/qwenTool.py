@@ -1,7 +1,7 @@
 import os
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+from langchain_core.output_parsers import StrOutputParser
 from langchain_community.chat_models import ChatTongyi
 
 def make_chain():

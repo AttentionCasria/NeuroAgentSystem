@@ -69,7 +69,7 @@ class qwenAgent:
             raise ValueError("未找到环境变量 QWEN-API-KEY，请设置该环境变量")
 
         self.llm = ChatTongyi(
-            model="qwen3-max-preview",
+            model="qwen3-max",
             dashscope_api_key=qwen_key,
             temperature=0.7,
             max_tokens=4000
@@ -132,6 +132,15 @@ class qwenAgent:
         return msg.content.strip() if isinstance(msg, AIMessage) else str(msg).strip()
 
     def run(self, words: str, round_num: int = 2, all_info: str = ""):
+        # 增加一个分类判断
+        intent_msg = self.llm.invoke([
+            SystemMessage(content="判断用户输入是否为医疗咨询。如果是闲聊或问候，返回'GREETING'，否则返回'MEDICAL'。"),
+            HumanMessage(content=words)
+        ]).content
+
+        if "GREETING" in intent_msg.upper():
+            return "您好！我是您的医疗助手，请问有什么具体的症状或医学问题我可以帮您？", ""
+
         logger.info(f"开始执行 run()，输入: {words}")
         conversation_history = []
 
