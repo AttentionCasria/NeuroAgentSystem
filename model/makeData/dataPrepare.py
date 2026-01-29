@@ -151,7 +151,7 @@ def run_vector_maker(topic_config):
             'error': f'文档目录不存在: {full_docs_dir}'
         }
 
-    # 设置环境变量 - 确保变量名与 vectorMaker.py 中的一致
+    # 设置环境变量 - 确保变量名与 vectorMakerEnglish.py 中的一致
     env = os.environ.copy()
     env['PYTHONIOENCODING'] = 'utf-8'
     env['PYTHONUTF8'] = '1'
@@ -171,7 +171,7 @@ def run_vector_maker(topic_config):
     try:
         # 运行vectorMaker.py脚本
         result = subprocess.run(
-            [sys.executable, os.path.join(base_dir, 'vectorMaker.py')],
+            [sys.executable, os.path.join(base_dir, 'vectorMakerEnglish.py')],
             env=env,
             capture_output=True,
             text=True,

@@ -1,9 +1,44 @@
-chroma_db/
-chroma_db_unified/
-model_cache/
+# --- Python 编译文件 & 缓存 ---
 __pycache__/
-*.sqlite3
+*.py[cod]
+*$py.class
+
+# --- 虚拟环境 (虽然你用的是 Conda，但防止未来创建本地 venv) ---
+venv/
+.venv/
+env/
+.env/
+
+# --- IDE 配置 (PyCharm & VS Code) ---
+.idea/
+.vscode/
+*.swp
+
+# --- !重要! 向量数据库存储 (根据你的日志) ---
+# 包含大量的 embedding 二进制文件，绝对不能上传
+chroma_db_bge/
+chroma_db/
+vector_store/
+
+# --- 数据文件 ---
+# 根据日志，你的 PDF 文档在 Data/documents 下
+Data/documents/
+# 如果不想上传任何 PDF 或 Excel
+*.pdf
+*.xlsx
+*.csv
+
+# --- 敏感信息 & 环境变量 ---
+.env
+.env.local
+# 你的 main.py 里目前硬编码了密钥，建议后续移入 .env 文件
+
+# --- 日志文件 ---
+*.log
+
+# --- 临时下载或模型权重 ---
+# 如果你有下载本地大模型权重文件
 *.bin
+*.pth
 *.pt
 *.safetensors
-

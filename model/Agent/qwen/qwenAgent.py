@@ -14,7 +14,7 @@ except ImportError:
     ChatOpenAI = None
 
 # 【修复】导入 UnifiedSearchEngine 类和配置，替代不存在的函数
-from makeData.dataRetrieve import UnifiedSearchEngine, CONFIG
+from makeData.Retrieve import UnifiedSearchEngine, CONFIG
 # 从项目根目录开始的全路径
 from Agent.qwen.qwenAssistant import MedicalAssistant
 
@@ -150,7 +150,7 @@ class qwenAgent:
 
         # 2. 初始文档检索 【修复：调用 search 方法】
         initial_docs = self.retriever_engine.search(
-            original_result,
+            words,
             top_k_final=CONFIG["top_k_final"]
         )
         logger.info(f'初始 RAG 检索到 {len(initial_docs)} 条文档')
@@ -161,7 +161,7 @@ class qwenAgent:
         for i in range(round_num):
             # 检索上下文 【修复：调用 search 方法】
             current_docs = self.retriever_engine.search(
-                patient_result,
+                words,
                 top_k_final=CONFIG["top_k_final"]
             )
             logger.info(f'第{i + 1}轮 RAG 检索到 {len(current_docs)} 条文档')

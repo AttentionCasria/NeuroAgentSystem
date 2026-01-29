@@ -6,7 +6,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
 from Agent.qwen.medicalAgent import MedicalReActAgent
 # 【修复】替换失效的函数引用，使用统一检索引擎和配置
-from makeData.dataRetrieve import UnifiedSearchEngine, CONFIG
+from makeData.Retrieve import UnifiedSearchEngine, CONFIG
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)

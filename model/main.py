@@ -54,7 +54,7 @@ async def lifespan(app: FastAPI):
 
         # 设置超时时间，避免无限等待
         resources["model"], resources["naming_model"] = await asyncio.wait_for(
-            asyncio.gather(*tasks), timeout=120.0
+            asyncio.gather(*tasks), timeout=2000.0
         )
         logging.info(">>> 所有模型预加载完成，服务已就绪")
     except asyncio.TimeoutError:
