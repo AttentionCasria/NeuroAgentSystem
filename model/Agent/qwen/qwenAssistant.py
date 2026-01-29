@@ -195,26 +195,6 @@ class MedicalAssistant:
                 logger.error(f"❌ Agent 处理问题 '{q}' 失败: {e}")
                 results[q] = f"Agent 检索过程中出错: {e}"
         return results
-    # def _retrieve_evidence(self, questions: List[str]) -> Dict[str, str]:
-    #     """步骤三：使用 UnifiedSearchEngine 进行检索"""
-    #     results = {}
-    #     for i, q in enumerate(questions, 1):
-    #         try:
-    #             # 增加检索日志
-    #             logger.info(f"   🔍 [{i}/{len(questions)}] 正在检索: {q}")
-    #
-    #             # 调用新的 search 方法
-    #             docs = self.retriever.search(q, top_k_final=CONFIG.get("top_k_final", 6))
-    #
-    #             logger.info(f"      -> 找到 {len(docs)} 条相关文献")
-    #
-    #             # 将文档内容合并为字符串
-    #             summary = "\n\n".join([doc.page_content for doc in docs])
-    #         except Exception as e:
-    #             logger.error(f"   ❌ 子问题 '{q}' 检索失败: {e}")
-    #             summary = f"检索时出错: {e}"
-    #         results[q] = summary
-    #     return results
 
     def _generate_diagnosis(self, original_result, questions, per_q_results, content, all_info) -> str:
         """步骤四：构建提示词并生成最终诊断"""
