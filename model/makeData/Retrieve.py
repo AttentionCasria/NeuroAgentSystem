@@ -60,10 +60,36 @@ class UnifiedSearchEngine:
             # 直接代理给 HybridRetriever
             results = self.retriever.get_relevant_documents(query)
             # 截取最终数量
-            return results[:top_k_final]
+            final_results = results[:top_k_final]
+
+            # --- 新增日志打印逻辑 ---
+            if final_results:
+                self.logger.info(f"🏆 检索成功，命中 {len(final_results)} 条相关文档:")
+                for i, doc in enumerate(final_results, 1):
+                    # 获取元数据中的文件名，预防没有 source 字段的情况
+                    source = doc.metadata.get("source", "未知来源")
+                    if isinstance(source, str):
+                        source = Path(source).name  # 只保留文件名，不打印长路径
+
+                    # 压缩内容中的换行符，防止日志刷屏
+                    content_preview = doc.page_content.replace('\n', ' ').strip()
+                    # 截取前 150 个字符用于预览
+                    preview_text = f"{content_preview[:150]}..." if len(content_preview) > 150 else content_preview
+
+                    self.logger.info(f"  👉 [结果 {i}] (来源: {source}): {preview_text}")
+            else:
+                self.logger.warning("⚠️ RAG 检索结果为空 (没有找到匹配文档)")
+            # ----------------------
+
+            return final_results
         except Exception as e:
-            self.logger.error(f"❌ 检索发生错误: {e}")
+            self.logger.error(f"❌ 检索发生错误: {e}", exc_info=True)
             return []
+        #     # 截取最终数量
+        #     return results[:top_k_final]
+        # except Exception as e:
+        #     self.logger.error(f"❌ 检索发生错误: {e}")
+        #     return []
 
 
 if __name__ == '__main__':

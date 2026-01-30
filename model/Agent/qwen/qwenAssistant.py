@@ -113,26 +113,48 @@ class MedicalAssistant:
             return ""
 
     def _decompose_questions(self, sum_talk: List[str]) -> str:
-        """步骤一：生成英文分解问题（强化医疗关联规则版）"""
+        # """步骤一：生成英文分解问题（强化医疗关联规则版）"""
         prompt_parts = [
             "### Role",
             "You are a medical clinical expert specialized in diagnostic reasoning.",
             "",
             "### Task",
-            "Analyze the following patient complaint summaries (sum_talk) and decompose them into 3 concise English sub-questions for medical evidence retrieval.",
+            # 修改 1：明确要求输出中文，以匹配中文临床文档库
+            "Analyze the following patient complaint summaries (sum_talk) and decompose them into 3 concise Chinese sub-questions optimized for RAG retrieval against Chinese clinical guidelines.",
             "",
             "### Decomposition Rules (Clinical Logic)",
-            "1. **Symptom Clustering**: If two or more symptoms co-occur (e.g., headache and nausea), prioritize a combined search logic (e.g., 'symptom A accompanied by symptom B') to explore potential underlying etiologies, rather than decomposing them into isolated symptoms.",
-            "2. **Contextual Specificity**: Each sub-question must include specific symptoms and their associated clinical scenarios (e.g., 'common causes of headache accompanied by nausea' or 'diagnostic evaluation for chronic cough with fever').",
+            "1. **Symptom Clustering**: ...",
+            "2. **Contextual Specificity**: ...",
             "3. **Retrieval Focus**: Formulate questions that help differentiate between similar conditions based on the patterns found in the summaries.",
             "",
             "### Constraints",
             "- Generate exactly 3 sub-questions.",
-            "- Each sub-question must be one concise sentence in English.",
+            # 修改 2：语言一致性
+            "- Each sub-question must be one concise sentence in Chinese.",
+            "- Use standard Chinese medical terminology (e.g., use '基底动脉尖综合征' instead of 'TOBS').",
             "- Focus on high-frequency and clinically significant symptoms in the provided list.",
             "",
             "### Patient Complaint Summaries (sum_talk):",
         ]
+        # prompt_parts = [
+        #     "### Role",
+        #     "You are a medical clinical expert specialized in diagnostic reasoning.",
+        #     "",
+        #     "### Task",
+        #     "Analyze the following patient complaint summaries (sum_talk) and decompose them into 3 concise English sub-questions for medical evidence retrieval.",
+        #     "",
+        #     "### Decomposition Rules (Clinical Logic)",
+        #     "1. **Symptom Clustering**: If two or more symptoms co-occur (e.g., headache and nausea), prioritize a combined search logic (e.g., 'symptom A accompanied by symptom B') to explore potential underlying etiologies, rather than decomposing them into isolated symptoms.",
+        #     "2. **Contextual Specificity**: Each sub-question must include specific symptoms and their associated clinical scenarios (e.g., 'common causes of headache accompanied by nausea' or 'diagnostic evaluation for chronic cough with fever').",
+        #     "3. **Retrieval Focus**: Formulate questions that help differentiate between similar conditions based on the patterns found in the summaries.",
+        #     "",
+        #     "### Constraints",
+        #     "- Generate exactly 3 sub-questions.",
+        #     "- Each sub-question must be one concise sentence in English.",
+        #     "- Focus on high-frequency and clinically significant symptoms in the provided list.",
+        #     "",
+        #     "### Patient Complaint Summaries (sum_talk):",
+        # ]
         prompt_parts.extend([f"- {talk}" for talk in sum_talk])
         prompt = "\n".join(prompt_parts)
 
