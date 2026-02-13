@@ -358,10 +358,11 @@ function handleUserClick() {
       overflow: auto;
 
       .chat-content {
-        width: 65%;
+        width: 75%;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 6px;
+        padding-bottom: 20px;
 
         overflow: auto;
         scrollbar-width: thin;
@@ -381,6 +382,11 @@ function handleUserClick() {
           border-radius: 12px;
           background-color: #2b2b2b;
           line-height: 1.6;
+          display: inline-block;
+          width: auto;
+          max-width: 85%;
+          word-break: break-word;
+          overflow-wrap: anywhere;
 
           .markdown-body {
             color: #fff;
@@ -407,7 +413,9 @@ function handleUserClick() {
             background-color: #07bf9b;
             border-radius: 20px;
             align-self: flex-end;
-            width: 45%;
+            display: inline-block;
+            width: auto;
+            max-width: 85%;
           }
         }
       }
@@ -425,7 +433,7 @@ function handleUserClick() {
 
     .input-box {
       width: 65%;
-      margin: 0 auto 20px auto;
+      margin: 30px auto 10px auto;
       display: flex;
       align-items: center;
       padding: 5px 10px;

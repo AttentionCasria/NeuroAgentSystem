@@ -5,10 +5,10 @@ import pause from '@/utils/pause'
 const typedText = ref('')
 const cursorShow = ref(true)
 const introductions = [
-  '智联诊链——多智能体深度检索神经医疗机器人。',
-  '融合医学文献与临床数据，助力智能诊疗。',
-  '专注神经系统疾病，精准匹配症状与诊断。',
-  '深度检索与分析，为患者提供科学建议。',
+  '脑卒中深度检索健康Agent助手——以循证医学为引擎的智能临床辅助平台。',
+  '融合现代医学最新指南与权威文献，提供基于证据的深度思考与分析。',
+  '专注脑卒中全周期管理，从风险预警、急性识别到康复导航。',
+  '以可靠信息降低认知负荷，为诊疗决策提供清晰、更新的知识支持。'
 ]
 
 
@@ -96,7 +96,8 @@ function typing(text, delay = 100) {
   text-align: center;
 
   .typing-text {
-    white-space: pre;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 
   // 打字机前面的圈圈以及其动画

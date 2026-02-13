@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AvatarUpload from '../AvatarUpload.vue'
 import { useUserStore } from '@/stores/user'
-import { updateInfoAPI } from '@/api/user'
+import { logoutAPI, updateInfoAPI } from '@/api/user'
 
 const form$ = ref(null)
 const router = useRouter()
@@ -45,7 +45,8 @@ function handleAvatarUploadSuccess(url) {
 }
 
 
-function handleLogout() {
+async function handleLogout() {
+  await logoutAPI()
   userStore.reset()
   router.replace('/login')
 }

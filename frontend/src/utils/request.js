@@ -2,6 +2,7 @@ import axios from 'axios'
 import { useUserStore } from '@/stores/user'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
+import router from '@/router'
 
 NProgress.configure({ showSpinner: false })
 
@@ -35,6 +36,7 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   function (response) {
     NProgress.done()
+
     const { data } = response
 
     if (data.code === 1) {
@@ -47,6 +49,14 @@ request.interceptors.response.use(
   function (error) {
     // 响应错误，关闭进度条
     NProgress.done()
+
+    // 处理 401 错误
+    if (error.response && error.response.status === 401) {
+      const userStore = useUserStore()
+      userStore.reset()
+      router.push('/login')
+    }
+
     return Promise.reject(error)
   },
 )

@@ -1,5 +1,6 @@
 import { useUserStore } from '@/stores/user'
 import request from '@/utils/request'
+import router from '@/router'
 
 // 1. 获取历史对话标题
 export const getChatTitlesAPI = () => request.get('/user/title')
@@ -30,6 +31,14 @@ function streamRequest(params, onChunk) {
       body: JSON.stringify(params),
     })
       .then((res) => {
+        // 处理 401 错误
+        if (res.status === 401) {
+          userStore.reset()
+          router.push('/login')
+          reject(new Error('Unauthorized'))
+          return
+        }
+
         const reader = res.body.getReader()
         const decoder = new TextDecoder('utf-8')
         let fullAnswer = ''
