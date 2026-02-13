@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,6 +30,12 @@ public class RegiServiceImpl extends ServiceImpl<RegiMapper, User> implements IR
         if(user==null){
             return Result.error("用户不存在");
         }
+
+        // 设置创建时间和更新时间
+        String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        user.setCreateTime(now);
+        user.setUpdateTime(now);
+
         boolean isSuccess = save(user);
         if (!isSuccess) {
             return Result.error("注册失败");

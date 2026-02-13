@@ -2,7 +2,7 @@ import os
 import logging
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
-from makeData.dataRetrieve import multi_collection_rag_retrieval
+from makeData.Retrieve import multi_collection_rag_retrieval
 from DeepSeek_Assistant import MedicalAssistant
 from langchain.schema import HumanMessage, SystemMessage, AIMessage
 from langchain.chat_models import ChatOpenAI

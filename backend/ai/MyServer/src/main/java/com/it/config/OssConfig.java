@@ -11,6 +11,12 @@ public class OssConfig {
     @Bean
     @ConditionalOnMissingBean
     public AliOssUpload aliOssUpload(AliOssProperties aliOssProperties) {
-        return new AliOssUpload(aliOssProperties.getEndpoint(), aliOssProperties.getBucketName(), aliOssProperties.getRegion());
+        return new AliOssUpload(
+                aliOssProperties.getEndpoint(),
+                aliOssProperties.getBucketName(),
+                aliOssProperties.getRegion(),
+                aliOssProperties.getAccessKeyId(),
+                aliOssProperties.getAccessKeySecret()
+        );
     }
 }

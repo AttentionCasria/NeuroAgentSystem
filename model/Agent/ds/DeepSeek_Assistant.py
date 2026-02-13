@@ -2,7 +2,7 @@
 from typing import List
 import re
 from langchain.schema import HumanMessage, SystemMessage, AIMessage
-from makeData.dataRetrieve import multi_collection_rag_retrieval
+from makeData.Retrieve import multi_collection_rag_retrieval
 import logging
 
 # 配置日志

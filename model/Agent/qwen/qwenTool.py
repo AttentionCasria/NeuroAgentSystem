@@ -1,8 +1,26 @@
 import os
+
+from dotenv import load_dotenv
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.chat_models import ChatTongyi
+
+# qwenTool.py
+from langchain.tools import tool
+
+from makeData.search_tool import MedicalSearchTool
+
+_search_tool = MedicalSearchTool()
+load_dotenv()
+
+@tool
+def medical_document_search(query: str) -> str:
+    """
+    用于查询医学指南 / 共识 / PDF 文档的工具。
+    当问题涉及疾病诊断、治疗方案、指南依据时，必须使用此工具。
+    """
+    return _search_tool.search(query)
 
 def make_chain():
     # 从环境变量获取API密钥

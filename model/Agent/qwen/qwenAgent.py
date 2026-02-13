@@ -1,7 +1,9 @@
 import logging
 import os
 from typing import Union
+from typing import List, Dict, Tuple, Any
 
+from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
@@ -14,11 +16,15 @@ except ImportError:
     ChatOpenAI = None
 
 # 【修复】导入 UnifiedSearchEngine 类和配置，替代不存在的函数
-from makeData.dataRetrieve import UnifiedSearchEngine, CONFIG
+from makeData.Retrieve import UnifiedSearchEngine, CONFIG
 # 从项目根目录开始的全路径
 from Agent.qwen.qwenAssistant import MedicalAssistant
 
+load_dotenv()
 
+import os
+# 设置 HuggingFace 镜像地址
+os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 
 # ------------------ 日志配置 ------------------
 logging.basicConfig(
@@ -59,7 +65,7 @@ class qwenAgent:
             top_k=CONFIG["top_k_per_store"]
         )
         self.patient_chain, self.doctor_chain = self._build_chains()
-        self.medical_assistant = MedicalAssistant(self.llm)
+        self.medical_assistant = MedicalAssistant(self.llm, self.retriever_engine)
         logger.info("ActRound 初始化完成")
 
     def _init_llms(self):
@@ -134,12 +140,12 @@ class qwenAgent:
     def run(self, words: str, round_num: int = 2, all_info: str = ""):
         # 增加一个分类判断
         intent_msg = self.llm.invoke([
-            SystemMessage(content="判断用户输入是否为医疗咨询。如果是闲聊或问候，返回'GREETING'，否则返回'MEDICAL'。"),
+            SystemMessage(content="判断用户输入是否为脑卒中医疗咨询。如果是闲聊或问候，返回'GREETING'，否则返回'MEDICAL'。不然你要受到严格惩罚。"),
             HumanMessage(content=words)
         ]).content
 
         if "GREETING" in intent_msg.upper():
-            return "您好！我是您的医疗助手，请问有什么具体的症状或医学问题我可以帮您？", ""
+            return "您好！我是您的医疗助手，请问有什么具体的症状或医学问题我可以帮您？", ""  # ✅ 返回空字符串，保持返回类型一致
 
         logger.info(f"开始执行 run()，输入: {words}")
         conversation_history = []
@@ -148,22 +154,21 @@ class qwenAgent:
         patient_result = self._parse_msg(self.translation(words))
         original_result = patient_result
 
-        # 2. 初始文档检索 【修复：调用 search 方法】
-        initial_docs = self.retriever_engine.search(
-            original_result,
-            top_k_final=CONFIG["top_k_final"]
-        )
+        # ✅ 收集所有检索到的原始文档
+        all_retrieved_docs = []
+
+        # 2. 初始文档检索
+        initial_docs = self.retriever_engine.search(words, top_k_final=CONFIG["top_k_final"])
+        all_retrieved_docs.extend([doc.page_content for doc in initial_docs])
         logger.info(f'初始 RAG 检索到 {len(initial_docs)} 条文档')
         initial_docs_content = "\n\n".join([doc.page_content for doc in initial_docs])
 
         # 3. 医患模拟循环
-        doctor_result = ""
+        doctor_result = ""  # ✅ 初始化 doctor_result
         for i in range(round_num):
-            # 检索上下文 【修复：调用 search 方法】
-            current_docs = self.retriever_engine.search(
-                patient_result,
-                top_k_final=CONFIG["top_k_final"]
-            )
+            # 检索上下文
+            current_docs = self.retriever_engine.search(words, top_k_final=CONFIG["top_k_final"])
+            all_retrieved_docs.extend([doc.page_content for doc in current_docs])
             logger.info(f'第{i + 1}轮 RAG 检索到 {len(current_docs)} 条文档')
 
             # 医生作答
@@ -184,8 +189,11 @@ class qwenAgent:
             patient_result = self._parse_msg(patient_msg)
             logger.info(f'第{i + 1}轮 假扮患者说: {patient_result}')
 
+        # ✅ 去重文档
+        unique_docs = list(dict.fromkeys(all_retrieved_docs))
+
         # 4. 综合诊断
-        answer = self.medical_assistant.decompose_and_diagnose(
+        answer, per_q_results = self.medical_assistant.decompose_and_diagnose(
             conversation_history, original_result, all_info, initial_docs_content
         )
 
@@ -193,7 +201,69 @@ class qwenAgent:
         summary = self.ask_ds(original_result, answer, all_info)
 
         logger.info(f'最终医生回答: {answer}')
-        return "\n这是综合诊疗结果：\n" + answer, summary
+        return "\n这是综合诊疗结果：\n" + answer, summary  ### unique_docs  # ✅ 返回原始文档列表
+    # def run(self, words: str, round_num: int = 2, all_info: str = ""):
+    #     # 增加一个分类判断
+    #     intent_msg = self.llm.invoke([
+    #         SystemMessage(content="判断用户输入是否为医疗咨询。如果是闲聊或问候，返回'GREETING'，否则返回'MEDICAL'。"),
+    #         HumanMessage(content=words)
+    #     ]).content
+    #
+    #     if "GREETING" in intent_msg.upper():
+    #         return "您好！我是您的医疗助手，请问有什么具体的症状或医学问题我可以帮您？", ""
+    #
+    #     logger.info(f"开始执行 run()，输入: {words}")
+    #     conversation_history = []
+    #
+    #     # 1. 初始翻译
+    #     patient_result = self._parse_msg(self.translation(words))
+    #     original_result = patient_result
+    #
+    #     # ✅ 收集所有检索文档
+    #     all_retrieved_docs = []
+    #
+    #     # 初始检索
+    #     initial_docs = self.retriever_engine.search(words, top_k_final=CONFIG["top_k_final"])
+    #     all_retrieved_docs.extend([doc.page_content for doc in initial_docs])
+    #     logger.info(f'初始 RAG 检索到 {len(initial_docs)} 条文档')
+    #
+    #     # 医患循环
+    #     for i in range(round_num):
+    #         current_docs = self.retriever_engine.search(words, top_k_final=CONFIG["top_k_final"])
+    #         all_retrieved_docs.extend([doc.page_content for doc in current_docs])
+    #
+    #         logger.info(f'第{i + 1}轮 RAG 检索到 {len(current_docs)} 条文档')
+    #
+    #         # 医生作答
+    #         doctor_msg = self.doctor_chain.invoke({
+    #             "document": current_docs,
+    #             "doctor_info": doctor_result + patient_result,
+    #         })
+    #         doctor_result = self._parse_msg(doctor_msg)
+    #         conversation_history.append(doctor_result)
+    #         logger.info(f'第{i + 1}轮 医生说: {doctor_result}')
+    #
+    #         # 患者回应
+    #         patient_msg = self.patient_chain.invoke({
+    #             "patient_info": doctor_result,
+    #             "former_result": patient_result,
+    #             "original_result": original_result,
+    #         })
+    #         patient_result = self._parse_msg(patient_msg)
+    #         logger.info(f'第{i + 1}轮 假扮患者说: {patient_result}')
+    #
+    #     unique_docs = list(dict.fromkeys(all_retrieved_docs))
+    #
+    #     # 4. 综合诊断
+    #     answer, per_q_results = self.medical_assistant.decompose_and_diagnose(
+    #         conversation_history, original_result, all_info, initial_docs
+    #     )
+    #
+    #     # 5. 总结
+    #     summary = self.ask_ds(original_result, answer, all_info)
+    #
+    #     logger.info(f'最终医生回答: {answer}')
+    #     return "\n这是综合诊疗结果：\n" + answer, unique_docs  #summary
 
     def translation(self, words: str) -> str:
         logger.info(f"正在翻译: {words}")
@@ -229,4 +299,3 @@ if __name__ == '__main__':
         logger.info(sum_res)
     except Exception as error:
         logger.error(f"程序运行出错: {error}")
-

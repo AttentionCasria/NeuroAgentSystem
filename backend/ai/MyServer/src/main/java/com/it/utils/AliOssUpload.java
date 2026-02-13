@@ -20,18 +20,25 @@ public class AliOssUpload {
     private String endpoint ;
     private String bucketName ;
     private String region ;
+    private String accessKeyId;
+    private String accessKeySecret;
 
     public String upload(byte[] content, String originalFilename) throws Exception {
-        // 从环境变量中获取访问凭证
-        EnvironmentVariableCredentialsProvider credentialsProvider =
-                CredentialsProviderFactory.newEnvironmentVariableCredentialsProvider();
-
         String dir = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"));
         String newFileName = UUID.randomUUID() + originalFilename.substring(originalFilename.lastIndexOf("."));
         String objectName = dir + "/" + newFileName;
 
         // 创建OSSClient实例（修改这里）
-        OSS ossClient = new OSSClientBuilder().build(endpoint, credentialsProvider);
+        OSS ossClient;
+        if (accessKeyId != null && !accessKeyId.isEmpty()) {
+            // 使用配置文件的 Key
+             ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
+        } else {
+            // 从环境变量中获取访问凭证
+            EnvironmentVariableCredentialsProvider credentialsProvider =
+                    CredentialsProviderFactory.newEnvironmentVariableCredentialsProvider();
+            ossClient = new OSSClientBuilder().build(endpoint, credentialsProvider);
+        }
 
         try {
             ossClient.putObject(bucketName, objectName, new ByteArrayInputStream(content));

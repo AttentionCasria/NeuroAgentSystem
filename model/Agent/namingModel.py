@@ -1,8 +1,12 @@
 import os
 import logging
+
+from dotenv import load_dotenv
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 
+
+load_dotenv()
 # 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
