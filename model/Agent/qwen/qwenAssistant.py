@@ -1,13 +1,16 @@
 import logging
 import re
-from typing import List, Dict
+from typing import List, Dict, Tuple, Any
 import traceback
+
+from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
 from Agent.qwen.medicalAgent import MedicalReActAgent
 # 【修复】替换失效的函数引用，使用统一检索引擎和配置
 from makeData.Retrieve import UnifiedSearchEngine, CONFIG
 
+load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -31,48 +34,40 @@ class MedicalAssistant:
         "differential diagnosis, and the latest clinical guidelines in your professional analysis."
     )
 
-    def __init__(self, llm):
+    def __init__(self, llm, retriever=None):
         self.llm = llm
-        logger.info("🔧 [MedicalAssistant] 初始化检索引擎...")
-        try:
-            # 1. 初始化检索引擎
-            # 请确保 CONFIG 字典中必须有 'persist_dir' 和 'top_k_per_store' 这两个Key
-            # 否则这里会抛出 KeyError
-            self.retriever = UnifiedSearchEngine(
-                persist_dir=CONFIG.get("persist_dir", "./chroma_db_unified"),  # 增加默认值防崩
-                top_k=CONFIG.get("top_k_per_store", 4)
-            )
 
+        if retriever:
+            self.retriever = retriever
+            logger.info("✅ [MedicalAssistant] 复用已有的检索引擎")
+        else:
+            logger.info("🔧 [MedicalAssistant] 初始化检索引擎...")
+            try:
+                # 1. 初始化检索引擎
+                # 请确保 CONFIG 字典中必须有 'persist_dir' 和 'top_k_per_store' 这两个Key
+                # 否则这里会抛出 KeyError
+                self.retriever = UnifiedSearchEngine(
+                    persist_dir=CONFIG.get("persist_dir", "./chroma_db_unified"),  # 增加默认值防崩
+                    top_k=CONFIG.get("top_k_per_store", 4)
+                )
+            except Exception as e:
+                # 【修改点2】打印完整的堆栈信息！
+                logger.error("❌ [MedicalAssistant] 初始化严重失败，详细堆栈如下：")
+                logger.error(traceback.format_exc())  # <--- 这行代码能告诉你具体死在哪一行
+                # 重新抛出异常，让 main.py 知道启动失败了
+                raise RuntimeError(f"MedicalAssistant Init Failed: {str(e)}")
+
+        try:
             # 2. 初始化 Agent
             # 如果 medicalAgent.py 里面有代码错误（如 logger 未定义），这里会报错
             self.agent = MedicalReActAgent(self.llm, self.retriever)
 
-            logger.info("✅ [MedicalAssistant] 检索引擎与 Agent 就绪")
-
+            logger.info("✅ [MedicalAssistant] Agent 就绪")
         except Exception as e:
-            # 【修改点2】打印完整的堆栈信息！
-            logger.error("❌ [MedicalAssistant] 初始化严重失败，详细堆栈如下：")
-            logger.error(traceback.format_exc())  # <--- 这行代码能告诉你具体死在哪一行
-            # 重新抛出异常，让 main.py 知道启动失败了
-            raise RuntimeError(f"MedicalAssistant Init Failed: {str(e)}")
+             logger.error("❌ [MedicalAssistant] Agent 初始化失败")
+             raise RuntimeError(f"MedicalAssistant Agent Init Failed: {str(e)}")
 
-    # def __init__(self, llm):
-    #     self.llm = llm
-    #     logger.info("🔧 [MedicalAssistant] 初始化检索引擎...")
-    #     try:
-    #         # 【新增】初始化检索引擎，适配新的数据检索方式
-    #         self.retriever = UnifiedSearchEngine(
-    #             persist_dir=CONFIG["persist_dir"],
-    #             top_k=CONFIG["top_k_per_store"]
-    #         )
-    #         # 初始化 Agent
-    #         self.agent = MedicalReActAgent(self.llm, self.retriever)
-    #         logger.info("✅ [MedicalAssistant] 检索引擎就绪")
-    #     except Exception as e:
-    #         logger.error(f"❌ [MedicalAssistant] 检索引擎初始化失败: {e}")
-    #         raise
-
-    def decompose_and_diagnose(self, sum_talk: List[str], original_result: str, all_info: str, content: str) -> str:
+    def decompose_and_diagnose(self, sum_talk: List[str], original_result: str, all_info: str, content: str) -> Tuple[str, Dict[str, str]]:
         """执行分解诊断全流程（带详细日志追踪）"""
         logger.info("=" * 40)
         logger.info("🚀 [MedicalAssistant] 开始执行分解诊断全流程")
@@ -98,7 +93,7 @@ class MedicalAssistant:
 
         logger.info("🎉 [MedicalAssistant] 流程结束，诊断生成完毕。")
         logger.info("=" * 40)
-        return diagnosis
+        return diagnosis, per_q_results
 
     def _invoke_llm(self, system_content: str, user_content: str) -> str:
         """封装大模型调用与结果解析"""

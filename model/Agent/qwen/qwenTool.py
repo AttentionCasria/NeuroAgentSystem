@@ -1,4 +1,6 @@
 import os
+
+from dotenv import load_dotenv
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
@@ -10,7 +12,7 @@ from langchain.tools import tool
 from makeData.search_tool import MedicalSearchTool
 
 _search_tool = MedicalSearchTool()
-
+load_dotenv()
 
 @tool
 def medical_document_search(query: str) -> str:

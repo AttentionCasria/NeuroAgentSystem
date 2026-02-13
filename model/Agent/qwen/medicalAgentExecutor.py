@@ -2,6 +2,7 @@ import json
 import os
 from typing import List, Dict
 
+from dotenv import load_dotenv
 # 【修复 1】引入通用工具代理 create_tool_calling_agent，而非 create_openai_functions_agent
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -11,6 +12,7 @@ from langchain_community.chat_models import ChatTongyi
 # 导入你现有的检索引擎和配置
 from makeData.Retrieve import UnifiedSearchEngine, CONFIG
 
+load_dotenv()
 # 1. 定义工具 (Tools)
 retriever = UnifiedSearchEngine(
     persist_dir=CONFIG["persist_dir"],

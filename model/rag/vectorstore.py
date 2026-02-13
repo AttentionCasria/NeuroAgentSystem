@@ -1,6 +1,6 @@
 import os
 from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import DashScopeEmbeddings
 
 
 def build_or_load_vectorstore(chunks, persist_dir="chroma_db_bge"):
@@ -13,9 +13,14 @@ def build_or_load_vectorstore(chunks, persist_dir="chroma_db_bge"):
     print(f"🔌 [VectorStore] 连接向量库位置: {persist_dir}")
 
     # 1. 初始化 Embedding 模型 (必须与存入时一致)
-    embeddings = HuggingFaceEmbeddings(
-        model_name="BAAI/bge-large-zh-v1.5",
-        encode_kwargs={"normalize_embeddings": True}
+    import os
+    if not os.getenv("DASHSCOPE_API_KEY"):
+         # 提醒用户设置 KEY，实际上应该在外部设置
+         pass
+
+    # 使用阿里云的通用文本向量模型
+    embeddings = DashScopeEmbeddings(
+        model="text-embedding-v2",  # 这是一个非常强且便宜的中文向量模型
     )
 
     # 2. 初始化 Chroma
@@ -29,8 +34,27 @@ def build_or_load_vectorstore(chunks, persist_dir="chroma_db_bge"):
         count = vectordb._collection.count()
         if count == 0 and chunks:
             print(f"⚠️ 检测到向量库为空，正在写入 {len(chunks)} 条数据...")
-            vectordb.add_documents(documents=chunks)
-            print("✅ 数据写入完成！")
+
+            # --- 增加批处理逻辑，防止单条失败导致整体写入失败 ---
+            batch_size = 32 # 阿里 API 批量建议不要太大
+            total_batches = (len(chunks) + batch_size - 1) // batch_size
+
+            for i in range(0, len(chunks), batch_size):
+                batch = chunks[i : i + batch_size]
+                try:
+                    vectordb.add_documents(documents=batch)
+                    print(f"   ⏳ 正在写入批次 {i // batch_size + 1}/{total_batches} (含 {len(batch)} 条数据)...")
+                except Exception as batch_e:
+                    print(f"   ❌ 批次 {i // batch_size + 1} 写入失败: {batch_e}")
+                    # 可选：如果批次失败，可以尝试逐条写入来挽救
+                    print(f"   👉 尝试逐条写入该批次...")
+                    for doc in batch:
+                        try:
+                            vectordb.add_documents(documents=[doc])
+                        except Exception as single_e:
+                            print(f"      ❌ 单条写入失败 (忽略): {str(single_e)[:100]}...")
+
+            print("✅ 数据写入流程结束！")
         else:
             print(f"✅ 向量库加载成功 (当前包含 {count} 条数据)")
 

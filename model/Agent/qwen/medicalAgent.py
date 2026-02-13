@@ -1,10 +1,14 @@
 import json
 import logging
 from typing import List, Dict, Any
+
+from dotenv import load_dotenv
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 
 from makeData.Retrieve import UnifiedSearchEngine, CONFIG
 
+
+load_dotenv()
 logger = logging.getLogger(__name__)
 
 

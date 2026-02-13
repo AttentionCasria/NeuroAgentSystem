@@ -14,9 +14,13 @@ from Agent.qwen.qwenAgent import qwenAgent
 # 假设 NamingModel 定义在 Agent.namingModel 中
 from Agent.namingModel import NamingModel
 
+import os
+# 设置 HuggingFace 镜像地址
+os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+
 # 配置常量
 # 建议：生产环境请使用 os.getenv("SECRET_KEY")
-SECRET_KEY = "/jdhn:836**1"
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 
 # 配置日志 - 确保日志能输出到控制台
@@ -153,6 +157,7 @@ async def get_model_result(request: QueryRequest):
 
 
 if __name__ == '__main__':
+
     # 启动服务
     # host="0.0.0.0" 允许外部访问
     # port=8000 指定端口
