@@ -1,44 +1,132 @@
 spring:
   application:
     name: MyServer
+  main:
+    allow-circular-references: true  # 允许循环依赖，解决启动报错问题
   profiles:
-    active: dev
+    active: prod  # 宝塔无法识别动态变量，改为固定值
+
   datasource:
-    url: jdbc:mysql://localhost:3306/medai
+    url: jdbc:mysql://${aiserver.datasource.host}:${aiserver.datasource.port}/${aiserver.datasource.database}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&characterEncoding=utf8
     driver-class-name: ${aiserver.datasource.driver-class-name}
     username: ${aiserver.datasource.username}
     password: ${aiserver.datasource.password}
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
   mvc:
     async:
-      request-timeout: 600000   # 单位毫秒，10分钟
+      request-timeout: 600000   # 10分钟
+
   data:
     redis:
-      host: 192.168.2.161
-      port: 6379
-      password: 123
+      host: ${aiserver.redis.host}
+      port: ${aiserver.redis.port}
+      database: 0
+      timeout: 5000ms
       lettuce:
         pool:
-          max-active: 10
+          max-active: 20
           max-idle: 10
-          min-idle: 1
+          min-idle: 2
+          max-wait: 3000ms
           time-between-eviction-runs: 10s
+
   jackson:
-    default-property-inclusion: non_null # JSON处理时忽略非空字段
+    default-property-inclusion: non_null
+    time-zone: Asia/Shanghai
+    date-format: yyyy-MM-dd HH:mm:ss
+
 mybatis:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-# 原有配置...
+    map-underscore-to-camel-case: true
+
+# AI 服务配置
 ai:
   api:
-    url: http://localhost:8000/model/get_result  # FastAPI 接口地址
+    url: ${aiserver.ai-api.url}
+    connect-timeout: 10000
+    read-timeout: 600000
 
+# 阿里云 OSS
 alioss:
   endpoint: ${aiserver.alioss.endpoint}
   bucketName: ${aiserver.alioss.bucketName}
   region: ${aiserver.alioss.region}
+  access-key-id: ${aiserver.alioss.access-key-id}
+  access-key-secret: ${aiserver.alioss.access-key-secret}
 
+# 服务器配置
 server:
+  port: 8080
   tomcat:
-    connection-timeout: 660s   # 设置请求响应超时为 60 秒
+    connection-timeout: 660s
+    max-connections: 10000
+    threads:
+      max: 200
+      min-spare: 10
+    accept-count: 100
+
+# 日志配置（宝塔环境推荐）
+logging:
+  file:
+    path: /www/wwwroot/myserver/logs  # 宝塔默认路径
+    name: ${logging.file.path}/application.log
+  level:
+    root: INFO
+    com.yourpackage: DEBUG  # 替换成你的包名
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
 
+
+#spring:
+#  application:
+#    name: MyServer
+#  profiles:
+#    active: dev
+#  datasource:
+#    url: jdbc:mysql://localhost:3306/medai
+#    driver-class-name: ${aiserver.datasource.driver-class-name}
+#    username: ${aiserver.datasource.username}
+#    password: ${aiserver.datasource.password}
+#  mvc:
+#    async:
+#      request-timeout: 600000   # 单位毫秒，10分钟
+#  data:
+#    redis:
+#      host: 192.168.2.161
+#      port: 6379
+#      password: 123
+#      lettuce:
+#        pool:
+#          max-active: 10
+#          max-idle: 10
+#          min-idle: 1
+#          time-between-eviction-runs: 10s
+#  jackson:
+#    default-property-inclusion: non_null # JSON处理时忽略非空字段
+#mybatis:
+#  configuration:
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+## 原有配置...
+#ai:
+#  api:
+#    url: http://localhost:8000/model/get_result  # FastAPI 接口地址
+#
+#alioss:
+#  endpoint: ${aiserver.alioss.endpoint}
+#  bucketName: ${aiserver.alioss.bucketName}
+#  region: ${aiserver.alioss.region}
+#
+#server:
+#  tomcat:
+#    connection-timeout: 660s   # 设置请求响应超时为 60 秒
+#
+#

@@ -8,6 +8,7 @@
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
           <entry name="$PROJECT_DIR$/../../CodingAPP/apache-maven-3.9.11/repo/org/projectlombok/lombok/1.18.38/lombok-1.18.38.jar" />
+          <entry name="$PROJECT_DIR$/../../CodingAPP/apache-maven-3.9.11/repo/org/projectlombok/lombok/1.18.38/lombok-1.18.38.jar" />
         </processorPath>
         <module name="MyServer" />
       </profile>

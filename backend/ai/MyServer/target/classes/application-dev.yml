@@ -3,9 +3,39 @@ aiserver:
     driver-class-name: com.mysql.cj.jdbc.Driver
     host: localhost
     port: 3306
+    database: medai
     username: root
-    password: Gongyusong666
+    password: Gongyusong666  # 开发环境可以明文
+
+  redis:
+    host: 127.0.0.1  # 本地开发
+    port: 6379
+    password:
+
+  ai-api:
+    url: http://localhost:8000/model/get_result
+
   alioss:
     endpoint: https://oss-cn-beijing.aliyuncs.com
     bucketName: darkside
-    region: cn-beijing
+    access-key-id: LTAI5tCsXMzZtiBxnUgqKPNA  # 开发环境测试用
+    access-key-secret: Bkp8ixYCRDicOWLeclRqdPvlNoxMiK
+
+# 开发环境日志
+logging:
+  level:
+    root: DEBUG
+
+
+
+#aiserver:
+#  datasource:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    host: localhost
+#    port: 3306
+#    username: root
+#    password: Gongyusong666
+#  alioss:
+#    endpoint: https://oss-cn-beijing.aliyuncs.com
+#    bucketName: darkside
+#    region: cn-beijing
