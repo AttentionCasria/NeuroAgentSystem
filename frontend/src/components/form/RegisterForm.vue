@@ -77,7 +77,7 @@ async function handleRegister() {
         max: '用户名至多为20个字符',
       }">
       <template #addon-before>
-        <UserSVG size="20" color="#fff"></UserSVG>
+        <UserSVG size="20" color="#64748b"></UserSVG>
       </template>
     </TextElement>
 
@@ -89,7 +89,7 @@ async function handleRegister() {
         confirmed: '两次密码不一致',
       }">
       <template #addon-before>
-        <PasswordSVG size="24" color="#fff"></PasswordSVG>
+        <PasswordSVG size="24" color="#64748b"></PasswordSVG>
       </template>
     </TextElement>
 
@@ -99,7 +99,7 @@ async function handleRegister() {
         required: '确认密码不能为空',
       }">
       <template #addon-before>
-        <PasswordSVG size="24" color="#fff"></PasswordSVG>
+        <PasswordSVG size="24" color="#64748b"></PasswordSVG>
       </template>
     </TextElement>
 
@@ -115,6 +115,11 @@ async function handleRegister() {
 </template>
 
 <style scoped lang="scss">
+h2 {
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+}
+
 .avatar-upload {
   display: flex;
   flex-direction: column;

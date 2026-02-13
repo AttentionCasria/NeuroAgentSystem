@@ -230,7 +230,7 @@ function handleUserClick() {
 
 <style scoped lang="scss">
 * {
-  color: #fff;
+  color: #333;
 }
 
 .container {
@@ -238,12 +238,14 @@ function handleUserClick() {
   height: 100vh;
 
   display: flex;
+  background-color: #f7f9fc;
 
   .chat-history {
     width: 260px;
-    background-color: #181818;
+    background-color: #fff;
     padding: 10px;
-    color: #fff;
+    color: #333;
+    border-right: 1px solid #e5e7eb;
 
     .new-chat,
     .delete-chat {
@@ -253,26 +255,34 @@ function handleUserClick() {
       transition: all 0.15s ease;
       cursor: pointer;
       font-size: 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+    }
+
+    .new-chat {
+      background-color: #07bf9b;
+      color: #fff;
+      border: none;
     }
 
     .new-chat:hover {
-      background-color: #303030;
-      border-radius: 5px;
+      background-color: #05a583;
     }
 
     .delete-chat {
       color: #ff4d4f;
+      background-color: #fff;
     }
 
     .delete-chat:hover {
-      background-color: #303030;
-      border-radius: 5px;
+      background-color: #fff1f0;
+      border-color: #ffa39e;
     }
 
     h3 {
       font-size: 14px;
       margin: 20px 10px 10px;
-      color: #aaa;
+      color: #666;
     }
 
     .chat-list {
@@ -280,29 +290,30 @@ function handleUserClick() {
       overflow-y: auto;
 
       .chat-item {
-        padding: 8px 12px;
-        border-radius: 5px;
+        padding: 10px 12px;
+        border-radius: 8px;
         cursor: pointer;
         font-size: 14px;
-        color: #ddd;
-        transition: background-color 0.15s ease;
+        color: #4b5563;
+        transition: all 0.15s ease;
 
-        margin-bottom: 10px;
+        margin-bottom: 8px;
 
         .title {
           display: block;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
-
         }
 
         &:hover {
-          background-color: #303030;
+          background-color: #f3f4f6;
+          color: #111827;
         }
 
         &.active {
-          background-color: #404040;
+          background-color: #eff6ff;
+          color: #3b82f6;
           font-weight: 500;
         }
       }
@@ -311,40 +322,50 @@ function handleUserClick() {
 
   .chat-panel {
     flex: 1;
-    background-color: #212121;
+    background-color: #f7f9fc;
     display: flex;
     flex-direction: column;
 
     .chat-header {
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 50px;
-      padding: 10px 20px;
+      height: 60px;
+      padding: 0 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-
-      background-color: transparent;
+      background-color: #fff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       z-index: 10;
 
       .title {
-        font-size: 20px;
+        font-size: 18px;
+        font-weight: 600;
+        color: #3b82f6;
       }
 
       .user {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 20px;
+        transition: background-color 0.2s;
+
+        &:hover {
+          background-color: #f3f4f6;
+        }
 
         img {
-          width: 40px;
-          height: 40px;
+          width: 32px;
+          height: 32px;
           border-radius: 50%;
+          border: 2px solid #eff6ff;
         }
 
         .username {
           font-weight: 500;
+          font-size: 14px;
+          color: #4b5563;
         }
       }
     }
@@ -354,68 +375,80 @@ function handleUserClick() {
       display: flex;
       justify-content: center;
       overflow-y: auto;
-
-      overflow: auto;
+      padding: 20px 0;
 
       .chat-content {
-        width: 75%;
+        width: 80%;
+        max-width: 900px;
         display: flex;
         flex-direction: column;
-        gap: 6px;
-        padding-bottom: 20px;
+        gap: 16px;
+        padding-bottom: 40px;
 
-        overflow: auto;
         scrollbar-width: thin;
-        scrollbar-color: #4d4d4d #212121;
+        scrollbar-color: #e5e7eb transparent;
 
         &::-webkit-scrollbar {
-          width: 10px;
+          width: 6px;
         }
 
-        &::-webkit-scrollbar-thumb:hover {
-          background-color: #c0c0c1;
+        &::-webkit-scrollbar-thumb {
+          background-color: #e5e7eb;
+          border-radius: 10px;
         }
 
         .message {
-          padding: 10px 30px 10px 40px;
+          padding: 12px 20px;
           align-self: flex-start;
           border-radius: 12px;
-          background-color: #2b2b2b;
+          background-color: #fff;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+          border: 1px solid #e5e7eb;
           line-height: 1.6;
           display: inline-block;
           width: auto;
           max-width: 85%;
           word-break: break-word;
           overflow-wrap: anywhere;
+          color: #374151;
 
           .markdown-body {
-            color: #fff;
+            color: #374151;
             font-size: 15px;
             line-height: 1.6;
             white-space: pre-wrap;
           }
 
           :deep(.markdown-body pre) {
-            background-color: #1a1a1a;
-            padding: 10px;
-            border-radius: 6px;
+            background-color: #f8fafc;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
             overflow-x: auto;
           }
 
           :deep(.markdown-body code) {
             font-family: 'Fira Code', 'Consolas', monospace;
-            background-color: #1a1a1a;
+            background-color: #f1f5f9;
+            color: #ef4444;
             padding: 2px 4px;
             border-radius: 4px;
           }
 
           &.user {
-            background-color: #07bf9b;
-            border-radius: 20px;
+            background-color: #3b82f6;
+            border-radius: 12px 12px 0 12px;
             align-self: flex-end;
             display: inline-block;
             width: auto;
             max-width: 85%;
+            color: #fff;
+            border: none;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+
+            * {
+              color: #fff;
+            }
           }
         }
       }
@@ -424,65 +457,78 @@ function handleUserClick() {
         display: flex;
         justify-content: center;
         align-items: center;
-        font-size: 40px;
-        font-weight: 500;
+        font-size: 32px;
+        font-weight: 600;
+        color: #d1d5db;
+        text-shadow: 0 1px 0 #fff;
       }
-
-
     }
 
     .input-box {
-      width: 65%;
-      margin: 30px auto 10px auto;
+      width: 80%;
+      max-width: 800px;
+      margin: 0 auto 30px auto;
       display: flex;
       align-items: center;
-      padding: 5px 10px;
-      border-radius: 50px;
-      background-color: #303030;
+      padding: 8px 16px;
+      border-radius: 16px;
+      background-color: #fff;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e5e7eb;
       box-sizing: border-box;
-
-      transition: all 0.15s ease;
+      transition: all 0.2s ease;
 
       &:focus-within {
-        border: 2px solid #07bf9b; // 高亮边框
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
       }
 
       input {
         flex: 1;
-        height: 40px;
-        padding: 0 15px;
+        height: 44px;
+        padding: 0 12px;
         border: none;
         outline: none;
         background-color: transparent;
-        font-size: 14px;
         font-size: 16px;
+        color: #1f2937;
 
         &::placeholder {
-          color: #bbb;
-          font-size: 16px;
+          color: #9ca3af;
         }
       }
 
       .send-btn {
-        width: 40px;
-        height: 40px;
-        margin-left: 10px;
-        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        margin-left: 12px;
+        border-radius: 10px;
         border: none;
-        background-color: #07bf9b;
+        background-color: #3b82f6;
         color: #fff;
-        font-size: 18px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        transition: all 0.15s ease;
+        transition: all 0.2s ease;
+
+        &:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+        }
+
+        &:active:not(:disabled) {
+          transform: translateY(0);
+        }
 
         &:disabled {
-          background-color: #4d4d4d; // 深灰色
+          background-color: #f3f4f6;
           cursor: not-allowed;
-          color: #aaa; // 字体变暗
+
+          :deep(svg) {
+            color: #d1d5db !important;
+          }
         }
       }
     }

@@ -103,7 +103,7 @@ function typing(text, delay = 100) {
   // 打字机前面的圈圈以及其动画
   .cursor {
     margin-left: 0.3rem;
-    color: #d292ff;
+    color: #3b82f6;
     animation: blink 1s infinite;
     font-size: 2rem;
   }

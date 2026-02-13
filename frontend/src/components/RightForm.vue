@@ -7,7 +7,7 @@ const isLogin = ref(false)
 </script>
 
 <template>
-  <div class="dark content">
+  <div class="content">
     <transition name="fade" mode="out-in">
       <div :key="isLogin ? 'login' : 'register'" class="form-wrapper">
         <LoginForm v-if="isLogin" />
@@ -44,7 +44,7 @@ const isLogin = ref(false)
 .switch-text {
   margin-top: 1rem;
   text-align: center;
-  color: #07bf9b;
+  color: #3b82f6;
   cursor: pointer;
 
   &:hover {

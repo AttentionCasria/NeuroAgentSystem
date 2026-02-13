@@ -61,7 +61,7 @@ async function handleLogin() {
         max: '用户名至多为20个字符',
       }">
       <template #addon-before>
-        <UserSVG size="20" color="#fff"></UserSVG>
+        <UserSVG size="20" color="#64748b"></UserSVG>
       </template>
     </TextElement>
 
@@ -71,7 +71,7 @@ async function handleLogin() {
         min: '密码至少为6个字符',
       }">
       <template #addon-before>
-        <PasswordSVG size="24" color="#fff"></PasswordSVG>
+        <PasswordSVG size="24" color="#64748b"></PasswordSVG>
       </template>
     </TextElement>
 
@@ -80,8 +80,13 @@ async function handleLogin() {
 </template>
 
 <style scoped lang="scss">
+h2 {
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+}
+
 .go-register {
-  color: #07bf9b;
+  color: #3b82f6;
   cursor: pointer;
 
   &:hover {

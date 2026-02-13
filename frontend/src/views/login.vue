@@ -26,8 +26,8 @@ import RightForm from '@/components/RightForm.vue'
   .left-intro {
     flex: 6;
     min-width: 0;
-    background-color: #00002e;
-    color: #d292ff;
+    background-color: #f0f7ff;
+    color: #1e293b;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -37,8 +37,8 @@ import RightForm from '@/components/RightForm.vue'
   .right-form {
     flex: 4;
     min-width: 0;
-    background-color: #000000;
-    color: #fff;
+    background-color: #ffffff;
+    color: #333;
     display: flex;
     align-items: center;
     justify-content: center;

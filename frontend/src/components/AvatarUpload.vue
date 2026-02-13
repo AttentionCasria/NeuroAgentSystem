@@ -87,17 +87,18 @@ const handleFileChange = async (e) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: #fff;
+  color: #64748b;
 
   .upload-btn {
     padding: 12px 20px;
-    background-color: #07bf9b;
+    background-color: #3b82f6;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
+    color: #fff;
 
     &:hover {
-      background-color: #05a583;
+      background-color: #2563eb;
     }
   }
 
@@ -107,7 +108,7 @@ const handleFileChange = async (e) => {
 
   .tip-text {
     margin-top: 8px;
-    color: red;
+    color: #ef4444;
     font-size: 14px;
   }
 
@@ -118,7 +119,7 @@ const handleFileChange = async (e) => {
     border-radius: 50%;
     overflow: hidden;
     cursor: pointer;
-    border: 2px solid #07bf9b;
+    border: 2px solid #3b82f6;
 
     img {
       width: 100%;
@@ -133,7 +134,7 @@ const handleFileChange = async (e) => {
       width: 100%;
       height: 30%;
       background: rgba(0, 0, 0, 0.6);
-      color: #07bf9b;
+      color: #fff;
       font-size: 12px;
       display: flex;
       justify-content: center;
