@@ -1,29 +1,34 @@
 <template>
-  <!-- 使用方式：<LoadingModal v-model="loading" /> -->
   <transition name="fade">
     <div
       v-if="show"
       class="lm-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label="加载中对话框"
-      @click.self="tryClose">
-      <div class="lm-container" @click.stop>
-        <div class="lm-spinner" aria-hidden="true"></div>
-        <div class="lm-message">{{ message }}</div>
+      aria-label="加载中对话框">
+      <div class="lm-container">
+        <div class="lm-spinner"></div>
+
+        <div class="lm-message">
+          <div class="lm-main">医疗助手正在认真思考中 ⏳</div>
+          <div class="lm-sub">模型回答大约需要 3 分钟，请耐心等待</div>
+          <div class="lm-tip">{{ currentTip }}</div>
+        </div>
+
       </div>
     </div>
   </transition>
 </template>
 
+
 <script setup>
-import { watch, onMounted, onBeforeUnmount, computed } from 'vue'
+import { watch, onMounted, onBeforeUnmount, computed, ref } from 'vue'
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
-  message: { type: String, default: '加载中...' },
-  disableClose: { type: Boolean, default: true }, // true：不允许通过点击遮罩或 ESC 关闭
+  disableClose: { type: Boolean, default: true },
 })
+
 const emit = defineEmits(['update:modelValue'])
 
 const show = computed({
@@ -31,17 +36,42 @@ const show = computed({
   set: (v) => emit('update:modelValue', v),
 })
 
+// 🧠 脑卒中医学常识
+const tips = [
+  '脑卒中（中风）发作后越早送医，恢复可能性越大。',
+  '出现口角歪斜、言语不清、肢体无力应立即就医。',
+  '高血压是脑卒中的重要危险因素，要定期监测。',
+  '突然单侧肢体麻木或无力是危险信号。',
+  '中风抢救有“黄金4.5小时”原则。',
+  '长期吸烟和饮酒会增加脑卒中风险。',
+  '糖尿病患者更容易发生脑血管意外。',
+  '发现异常症状，千万不要等待自行恢复。',
+]
+
+const currentTip = ref('')
+let timer = null
+
+function changeTip() {
+  const index = Math.floor(Math.random() * tips.length)
+  currentTip.value = tips[index]
+}
+
 // 防止背景滚动
 watch(
   () => show.value,
   (val) => {
-    if (val) document.body.style.overflow = 'hidden'
-    else document.body.style.overflow = ''
+    if (val) {
+      document.body.style.overflow = 'hidden'
+      changeTip()
+      timer = setInterval(changeTip, 7000)
+    } else {
+      document.body.style.overflow = ''
+      clearInterval(timer)
+    }
   },
   { immediate: true }
 )
 
-// ESC 键处理（只有在 disableClose=false 时允许关闭）
 function onKeydown(e) {
   if (e.key === 'Escape' || e.key === 'Esc') {
     if (!props.disableClose) show.value = false
@@ -51,15 +81,18 @@ function onKeydown(e) {
 onMounted(() => {
   window.addEventListener('keydown', onKeydown)
 })
+
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeydown)
   document.body.style.overflow = ''
+  clearInterval(timer)
 })
 
-function tryClose() {
-  if (!props.disableClose) show.value = false
-}
+// function tryClose() {
+//   if (!props.disableClose) show.value = false
+// }
 </script>
+
 
 <style scoped>
 /* 遮罩 */
@@ -109,9 +142,27 @@ function tryClose() {
 }
 
 .lm-message {
-  font-size: 14px;
-  color: #222;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lm-main {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.lm-sub {
+  font-size: 13px;
+  color: #666;
+}
+
+.lm-tip {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #07bf9b;
+  opacity: 0.9;
 }
 
 /* 简单淡入效果 */

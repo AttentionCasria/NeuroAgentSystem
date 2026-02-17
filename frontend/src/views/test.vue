@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
+import LoadingModel from '@/components/LoadingModel.vue'
 
 defineOptions({
   name: 'TestIndex',
@@ -35,6 +36,9 @@ const testText = ref(`
 - 列表1
 - 列表2
 `)
+
+// 加载状态
+const loading = ref(true)
 </script>
 
 <template>
@@ -44,6 +48,8 @@ const testText = ref(`
 
     <h2>解析后效果</h2>
     <div class="markdown-body" v-html="renderMarkdown(testText)"></div>
+
+    <LoadingModel v-model="loading" />
   </div>
 </template>
 
