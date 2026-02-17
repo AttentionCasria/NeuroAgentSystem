@@ -170,6 +170,20 @@ async function handleDeleteAll() {
 function handleUserClick() {
   isDialogShow.value = true
 }
+
+// 复制回答
+function handleCopy(text) {
+  if (!text) return
+
+  navigator.clipboard.writeText(text)
+    .then(() => {
+      console.log('复制成功')
+    })
+    .catch(() => {
+      console.error('复制失败')
+    })
+}
+
 </script>
 
 <template>
@@ -213,13 +227,28 @@ function handleUserClick() {
           <div
             v-for="(msg, i) in currentTalkList"
             :key="i"
-            class="message"
+            class="message-wrapper"
             :class="{ user: i % 2 === 0 }">
-            <template v-if="i % 2 === 0">
-              {{ msg }}
-            </template>
-            <div v-else class="markdown-body" v-html="renderMarkdown(msg)"></div>
+
+            <div
+              class="message"
+              :class="{ user: i % 2 === 0 }">
+
+              <template v-if="i % 2 === 0">
+                {{ msg }}
+              </template>
+
+              <div v-else class="markdown-body" v-html="renderMarkdown(msg)">
+              </div>
+            </div>
+
+            <!-- 复制按钮 -->
+            <button class="copy-btn" @click="handleCopy(msg)">
+              复制
+            </button>
+
           </div>
+
         </div>
         <div v-else class="empty">
           我可以帮助您什么？
@@ -460,6 +489,35 @@ function handleUserClick() {
             * {
               color: #fff;
             }
+          }
+        }
+
+        .message-wrapper {
+          display: flex;
+          flex-direction: column;
+          position: relative;
+
+          &.user {
+            align-items: flex-end;
+          }
+
+          &:hover .copy-btn {
+            opacity: 1;
+          }
+        }
+
+        .copy-btn {
+          margin-top: 4px;
+          font-size: 12px;
+          background: transparent;
+          border: none;
+          color: #9ca3af;
+          cursor: pointer;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+
+          &:hover {
+            color: #3b82f6;
           }
         }
       }
