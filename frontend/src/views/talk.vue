@@ -21,12 +21,21 @@ const canSendMessage = ref(true) // 防止重复发送
 
 const loading = ref(false)  // 控制加载中模态框是否展示
 
+
 marked.setOptions({
   gfm: true,
   breaks: true,
 })
 
-const renderMarkdown = (raw = '') => DOMPurify.sanitize(marked.parse(raw || ''))
+const renderMarkdown = (raw = '') => {
+  return DOMPurify.sanitize(
+    marked.parse(raw, {
+      breaks: true,
+      gfm: true
+    })
+  )
+}
+
 
 
 // 页面挂载时拉取历史对话
@@ -42,6 +51,8 @@ onMounted(async () => {
 // 拉取历史标题列表
 async function fetchTalkTitle() {
   const res = await getChatTitlesAPI()
+
+
   if (res.data && res.data.length > 0) {
     talkTitleList.value = res.data
   }
@@ -459,7 +470,6 @@ function handleUserClick() {
         align-items: center;
         font-size: 32px;
         font-weight: 600;
-        color: #d1d5db;
         text-shadow: 0 1px 0 #fff;
       }
     }
