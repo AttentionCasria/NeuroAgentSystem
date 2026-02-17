@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import login from '@/views/login.vue'
 import talk from '@/views/talk.vue'
+import test from '@/views/test.vue'
+
 import { useUserStore } from '@/stores/user'
 
 const router = createRouter({
@@ -8,6 +10,7 @@ const router = createRouter({
   routes: [
     { path: '/login', component: login },
     { path: '/', component: talk },
+    { path: '/test', component: test },
   ],
 })
 // 全局前置守卫
