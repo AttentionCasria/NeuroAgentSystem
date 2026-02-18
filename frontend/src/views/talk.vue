@@ -175,14 +175,41 @@ function handleUserClick() {
 function handleCopy(text) {
   if (!text) return
 
-  navigator.clipboard.writeText(text)
-    .then(() => {
-      console.log('复制成功')
-    })
-    .catch(() => {
-      console.error('复制失败')
-    })
+  // 优先使用现代 API
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        alert('复制成功')
+      })
+      .catch(() => {
+        fallbackCopy(text)
+      })
+  } else {
+    fallbackCopy(text)
+  }
 }
+
+// 兼容旧浏览器
+function fallbackCopy(text) {
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.style.position = 'fixed'
+  textarea.style.opacity = '0'
+  document.body.appendChild(textarea)
+
+  textarea.select()
+
+  try {
+    document.execCommand('copy')
+    alert('复制成功')
+  } catch (err) {
+    console.error('复制失败', err)
+    alert('复制失败')
+  }
+
+  document.body.removeChild(textarea)
+}
+
 
 </script>
 
