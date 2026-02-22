@@ -133,6 +133,26 @@ async function sendMessage() {
   window.location.reload() // 刷新，从新拉取数据
 }
 
+// 删除指定对话
+async function handleDeleteChat(talkId) {
+  if (!confirm('确定要删除此对话吗？此操作不可撤销！')) return
+
+  try {
+    await deleteChatAPI(talkId)
+
+    // 从列表中移除
+    talkTitleList.value = talkTitleList.value.filter(t => t.talkId !== talkId)
+
+    // 如果删除的是当前对话，切换到新对话
+    if (currentTalkId.value === talkId) {
+      handleNewChat()
+    }
+  } catch (err) {
+    console.error('删除对话失败', err)
+    alert('删除失败，请重试')
+  }
+}
+
 async function handleDeleteAll() {
   if (!confirm('确定要删除所有对话吗？此操作不可撤销！')) return
 
@@ -234,6 +254,7 @@ function fallbackCopy(text) {
           :class="{ active: talk.talkId === currentTalkId }"
           @click="handleClickTalkTitle(talk.talkId)">
           <span class="title">{{ talk.title }}</span>
+          <button class="delete-btn" @click="handleDeleteChat(talk.talkId)">删除</button>
         </div>
       </div>
     </div>
@@ -371,6 +392,18 @@ function fallbackCopy(text) {
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
+        }
+
+        .delete-btn {
+          float: right;
+          padding: 2px 6px;
+          font-size: 12px;
+          color: #ff4d4f;
+          background-color: #fff;
+          border: 1px solid #ff4d4f;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: all 0.15s ease;
         }
 
         &:hover {
