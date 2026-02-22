@@ -37,7 +37,6 @@ const renderMarkdown = (raw = '') => {
 }
 
 
-
 // 页面挂载时拉取历史对话
 onMounted(async () => {
   await fetchTalkTitle()
@@ -153,6 +152,7 @@ async function handleDeleteChat(talkId) {
   }
 }
 
+// 删除所有对话
 async function handleDeleteAll() {
   if (!confirm('确定要删除所有对话吗？此操作不可撤销！')) return
 
