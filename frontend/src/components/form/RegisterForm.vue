@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AvatarUpload from '../AvatarUpload.vue'
-import { registerAPI } from '@/api/user'
+import { registerAPI, loginAPI } from '@/api/user'
 import { useUserStore } from '@/stores/user'
 
 const form$ = ref(null)
@@ -49,8 +49,27 @@ async function handleRegister() {
   userStore.token = res.data.token
   userStore.image = image.value  // 由于接口没有返回头像地址，直接用上传的地址
 
+  // 注册后直接登录
+  try {
+    const res = await loginAPI({
+      name: registerFormData.value.name,
+      password: registerFormData.value.password,
+    })
+    if (res.code === 1) {
+      userStore.name = res.data.name
+      userStore.image = res.data.image
+      userStore.token = res.data.token
 
-  router.replace('/')
+      // 跳转到对话
+      router.replace('/')
+    }
+  } catch (err) {
+    if (err?.code === 0) {
+      alert('密码错误')
+    } else {
+      alert(err?.msg || '登录失败，请稍后再试')
+    }
+  }
 }
 </script>
 
