@@ -60,7 +60,7 @@ function typing(text, delay = 100) {
 <template>
   <div class="title">Synapse MD
     <div class="sub-title">
-      一个脑卒中健康辅助诊疗系统，提供健康辅助诊疗
+      脑卒中健康辅助诊疗系统，提供健康辅助诊疗
     </div>
   </div>
   <transition>
