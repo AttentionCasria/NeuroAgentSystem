@@ -25,7 +25,7 @@ const close = () => {
 
 
           <!-- 编辑信息 -->
-          <div class="dark">
+          <div>
             <EditForm></EditForm>
           </div>
 
