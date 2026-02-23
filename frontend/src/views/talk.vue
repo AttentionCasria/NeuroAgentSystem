@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, nextTick } from 'vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import UserDialog from '@/components/UserDialog.vue'
@@ -129,7 +129,10 @@ async function sendMessage() {
 
   canSendMessage.value = true
   loading.value = false
-  window.location.reload() // 刷新，从新拉取数据
+  nextTick(() => {
+    autoResize();
+  });
+  // window.location.reload() // 刷新，从新拉取数据
 }
 
 // 删除指定对话
@@ -230,7 +233,16 @@ function fallbackCopy(text) {
   document.body.removeChild(textarea)
 }
 
+// 自动调整 textarea 高度
+const autoResize = () => {
+  const el = inputRef.value;
+  if (!el) return;
 
+  // 先重置高度为 auto，以获取正确的 scrollHeight
+  el.style.height = 'auto';
+  // 设置高度为滚动高度，最大不超过 max-height (在 CSS 中控制)
+  el.style.height = `${el.scrollHeight}px`;
+};
 </script>
 
 <template>
@@ -305,7 +317,9 @@ function fallbackCopy(text) {
 
       <!-- 输入区 -->
       <div class="input-box">
-        <input type="text" ref="inputRef" placeholder="请输入您的问题" v-model="message" @keyup.enter="sendMessage" />
+        <!-- 1. 改为 textarea，添加 rows="1" 和 @input 事件 -->
+        <textarea ref="inputRef" rows="1" placeholder="请输入您的问题" v-model="message" @input="autoResize"
+          @keydown.enter.exact.prevent="sendMessage" @keydown.enter.shift="allowNewLine" />
         <button class="send-btn" :disabled="message.trim() === '' || !canSendMessage" @click="sendMessage">
           <ArrowSVG color="#fff" size="24" />
         </button>
@@ -603,7 +617,8 @@ function fallbackCopy(text) {
       max-width: 800px;
       margin: 0 auto 30px auto;
       display: flex;
-      align-items: center;
+      align-items: flex-end;
+      /* 改为 flex-end，防止输入框变高时按钮悬浮在中间 */
       padding: 8px 16px;
       border-radius: 16px;
       background-color: #fff;
@@ -617,18 +632,42 @@ function fallbackCopy(text) {
         box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
       }
 
-      input {
+      /* 4. 重置 textarea 样式 */
+      textarea {
         flex: 1;
-        height: 44px;
-        padding: 0 12px;
+        min-height: 44px;
+        /* 对应原 input 的高度 */
+        max-height: 200px;
+        /* 限制最大高度，超出后出现滚动条 */
+        padding: 12px 12px;
+        /* 调整内边距以匹配视觉 */
         border: none;
         outline: none;
         background-color: transparent;
-        font-size: 16px;
+        font-size: 1rem;
+        line-height: 1.5;
+        /* 行高影响高度计算 */
         color: #1f2937;
+        resize: none;
+        /* 禁止手动拖拽调整大小 */
+        overflow-y: auto;
+        /* 超出最大高度显示滚动条 */
+        font-family: inherit;
+        /* 继承字体 */
+        box-sizing: border-box;
 
         &::placeholder {
           color: #9ca3af;
+        }
+
+        /* 隐藏滚动条但保留功能 (可选，为了美观) */
+        &::-webkit-scrollbar {
+          width: 4px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background-color: #e5e7eb;
+          border-radius: 4px;
         }
       }
 
@@ -636,6 +675,8 @@ function fallbackCopy(text) {
         width: 36px;
         height: 36px;
         margin-left: 12px;
+        /* 调整 margin-bottom 以对齐底部，因为父级改为了 flex-end */
+        margin-bottom: 4px;
         border-radius: 10px;
         border: none;
         background-color: #3b82f6;
