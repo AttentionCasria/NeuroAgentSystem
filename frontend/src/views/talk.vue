@@ -6,21 +6,23 @@ import UserDialog from '@/components/UserDialog.vue'
 import { useUserStore } from '@/stores/user'
 import { deleteChatAPI, getChatHistoryAPI, getChatTitlesAPI, newChatStreamAPI, sendQuestionStreamAPI } from '@/api/talk'
 import LoadingModel from '@/components/LoadingModel.vue'
+// 假设 ArrowSVG 是全局组件或已注册，如果不是请取消下面注释并导入
+// import ArrowSVG from '@/components/ArrowSVG.vue'
+
 defineOptions({ name: 'TalkIndex' })
 
 const message = ref('')
 const isDialogShow = ref(false)
 const userStore = useUserStore()
-const talkTitleList = ref([])  // 默认空数组
+const talkTitleList = ref([])
 const inputRef = ref(null)
+const chatContainerRef = ref(null) // 用于滚动到底部
 
-const currentTalkId = ref(0)       // 当前对话 ID，0 表示新对话
-const currentTalkList = ref([])    // 当前对话消息列表
+const currentTalkId = ref(0)
+const currentTalkList = ref([])
 
-const canSendMessage = ref(true) // 防止重复发送
-
-const loading = ref(false)  // 控制加载中模态框是否展示
-
+const canSendMessage = ref(true)
+const loading = ref(false)
 
 marked.setOptions({
   gfm: true,
@@ -28,227 +30,215 @@ marked.setOptions({
 })
 
 const renderMarkdown = (raw = '') => {
+  if (!raw) return ''
   return DOMPurify.sanitize(
-    marked.parse(raw, {
+    marked.parse(String(raw), {
       breaks: true,
       gfm: true
     })
   )
 }
 
-
-// 页面挂载时拉取历史对话
 onMounted(async () => {
   await fetchTalkTitle()
-
   if (talkTitleList.value.length > 0) {
-    currentTalkId.value = talkTitleList.value[0].talkId
-    fetchTalkHistory(currentTalkId.value)
+    // 过滤掉可能存在的残留占位符
+    const validTalk = talkTitleList.value.find(t => t.talkId !== 0)
+    if (validTalk) {
+      currentTalkId.value = validTalk.talkId
+      fetchTalkHistory(currentTalkId.value)
+    }
   }
 })
 
-// 拉取历史标题列表
 async function fetchTalkTitle() {
-  const res = await getChatTitlesAPI()
-
-
-  if (res.data && res.data.length > 0) {
-    talkTitleList.value = res.data
+  try {
+    const res = await getChatTitlesAPI()
+    if (res.data && res.data.length > 0) {
+      talkTitleList.value = res.data
+    }
+  } catch (e) {
+    console.error('获取标题失败', e)
   }
 }
 
-// 点击切换历史对话
 function handleClickTalkTitle(talkId) {
+  if (talkId === currentTalkId.value) return
   currentTalkId.value = talkId
   fetchTalkHistory(talkId)
 }
 
-// 获取对话历史
 async function fetchTalkHistory(talkId = currentTalkId.value) {
-  const res = await getChatHistoryAPI(talkId)
-  currentTalkList.value = res.data
+  try {
+    const res = await getChatHistoryAPI(talkId)
+    // 确保是数组
+    currentTalkList.value = Array.isArray(res.data) ? res.data : []
+    nextTick(() => scrollToBottom())
+  } catch (e) {
+    console.error('获取历史失败', e)
+  }
 }
 
-// 点击开始新对话
 function handleNewChat() {
   currentTalkId.value = 0
   currentTalkList.value = []
 
-  // 删除已有占位
+  // 清理可能存在的旧占位
   talkTitleList.value = talkTitleList.value.filter(t => t.talkId !== 0)
+  talkTitleList.value.unshift({ talkId: 0, title: '新对话' })
 
-  // 插入新占位标题，确保没有重复的talkId = 0后再插入
-  if (!talkTitleList.value.some(t => t.talkId === 0)) {
-    talkTitleList.value.unshift({ talkId: 0, title: '新对话' })
-  }
-
-  // 自动聚焦输入框
   if (inputRef.value) inputRef.value.focus()
 }
 
-// 发送消息
+// 发送消息核心逻辑修复
 async function sendMessage() {
   const text = message.value.trim()
-  if (text === '') return
-  message.value = ''
+  if (text === '' || !canSendMessage.value) return
 
+  message.value = ''
   canSendMessage.value = false
   loading.value = true
 
-  // 用户消息先 push
+  // 1. 先上屏用户消息
   currentTalkList.value.push(text)
-
-  if (currentTalkId.value === 0) {
-    // 新对话
-    try {
-      const res = await newChatStreamAPI({ question: text })
-      const { talkId, title, content } = res.data
-
-      currentTalkId.value = talkId
-
-      // 替换占位标题
-      const index = talkTitleList.value.findIndex(t => t.talkId === 0)
-      if (index !== -1) talkTitleList.value[index] = { talkId, title }
-      else talkTitleList.value.unshift({ talkId, title })
-
-      currentTalkList.value.push(content)
-    } catch (err) {
-      console.error('新建对话失败', err)
-      currentTalkList.value.pop() // 撤回用户消息
-    }
-  } else {
-    // 继续对话
-    try {
-      const res2 = await sendQuestionStreamAPI({ talkId: currentTalkId.value, question: text })
-      currentTalkList.value.push(res2.data.content)
-    } catch (err) {
-      console.error('发送消息失败', err)
-      currentTalkList.value.pop() // 撤回用户消息
-    }
-  }
-
-  canSendMessage.value = true
-  loading.value = false
-  nextTick(() => {
-    autoResize();
-  });
-  // window.location.reload() // 刷新，从新拉取数据
-}
-
-// 删除指定对话
-async function handleDeleteChat(talkId) {
-  if (!confirm('确定要删除此对话吗？此操作不可撤销！')) return
+  nextTick(() => scrollToBottom())
 
   try {
+    let content = ''
+
+    if (currentTalkId.value === 0) {
+      // 新对话
+      const res = await newChatStreamAPI({ question: text })
+      const { talkId, title, content: resContent } = res.data || {}
+
+      // 更新对话 ID 和标题
+      if (talkId) {
+        currentTalkId.value = talkId
+        const index = talkTitleList.value.findIndex(t => t.talkId === 0)
+        if (index !== -1) {
+          talkTitleList.value[index] = { talkId, title }
+        } else {
+          talkTitleList.value.unshift({ talkId, title })
+        }
+      }
+      content = resContent
+    } else {
+      // 继续对话
+      const res2 = await sendQuestionStreamAPI({ talkId: currentTalkId.value, question: text })
+      content = res2.data?.content
+    }
+
+    // 2. 关键修复：检查 content 是否有值
+    if (content) {
+      currentTalkList.value.push(content)
+    } else {
+      // 如果流式返回为空（常见 bug），立即重新拉取历史记录作为兜底
+      console.warn('API 返回内容为空，重新拉取历史记录')
+      await fetchTalkHistory(currentTalkId.value)
+      // fetchTalkHistory 内部已经替换了 currentTalkList，无需再 push
+      return
+    }
+
+  } catch (err) {
+    console.error('发送失败', err)
+    // 失败则撤回用户消息
+    currentTalkList.value.pop()
+    alert('发送失败，请重试')
+  } finally {
+    canSendMessage.value = true
+    loading.value = false
+    nextTick(() => {
+      autoResize()
+      scrollToBottom()
+    })
+  }
+}
+
+async function handleDeleteChat(talkId) {
+  if (!confirm('确定要删除此对话吗？此操作不可撤销！')) return
+  try {
     await deleteChatAPI(talkId)
-
-    // 从列表中移除
     talkTitleList.value = talkTitleList.value.filter(t => t.talkId !== talkId)
-
-    // 如果删除的是当前对话，切换到新对话
     if (currentTalkId.value === talkId) {
       handleNewChat()
     }
   } catch (err) {
-    console.error('删除对话失败', err)
-    alert('删除失败，请重试')
+    console.error('删除失败', err)
+    alert('删除失败')
   }
 }
 
-// 删除所有对话
 async function handleDeleteAll() {
   if (!confirm('确定要删除所有对话吗？此操作不可撤销！')) return
-
   if (!talkTitleList.value || talkTitleList.value.length === 0) return
 
+  loading.value = true
   try {
-    // 循环删除每个对话
-    for (const talk of talkTitleList.value) {
-      // 跳过占位（新对话占位 talkId = 0）
-      if (talk.talkId === 0) continue
-      await deleteChatAPI(talk.talkId)
-    }
+    // 并行删除以提高速度，或按需串行
+    const deletePromises = talkTitleList.value
+      .filter(t => t.talkId !== 0)
+      .map(t => deleteChatAPI(t.talkId))
 
-    // 清空前端列表和当前对话
+    await Promise.all(deletePromises)
+
+    // 清空前端状态
     talkTitleList.value = []
     currentTalkList.value = []
     currentTalkId.value = 0
 
+    // 重新拉取确认
+    await fetchTalkTitle()
+    handleNewChat() // 重置为新对话状态
   } catch (err) {
-    console.error('删除所有对话失败', err)
+    console.error('删除所有失败', err)
     alert('删除失败，请重试')
+  } finally {
+    loading.value = false
   }
-
-  // 重置所有数据
-  talkTitleList.value = []
-  currentTalkId.value = 0
-  currentTalkList.value = []
-
-
-  // 拉取空列表
-  fetchTalkTitle()
 }
 
-// 弹出用户信息弹窗
 function handleUserClick() {
   isDialogShow.value = true
 }
 
-// 复制回答
 function handleCopy(text) {
   if (!text) return
-
-  // 优先使用现代 API
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text)
-      .then(() => {
-        alert('复制成功')
-      })
-      .catch(() => {
-        fallbackCopy(text)
-      })
+    navigator.clipboard.writeText(text).then(() => alert('复制成功')).catch(() => fallbackCopy(text))
   } else {
     fallbackCopy(text)
   }
 }
 
-// 兼容旧浏览器
 function fallbackCopy(text) {
   const textarea = document.createElement('textarea')
   textarea.value = text
   textarea.style.position = 'fixed'
   textarea.style.opacity = '0'
   document.body.appendChild(textarea)
-
   textarea.select()
-
-  try {
-    document.execCommand('copy')
-    alert('复制成功')
-  } catch (err) {
-    console.error('复制失败', err)
-    alert('复制失败')
-  }
-
-  document.body.removeChild(textarea)
+  document.execCommand('copy')
+  alert('复制成功')
 }
 
-// 自动调整 textarea 高度
 const autoResize = () => {
-  const el = inputRef.value;
-  if (!el) return;
+  const el = inputRef.value
+  if (!el) return
+  el.style.height = 'auto'
+  el.style.height = `${el.scrollHeight}px`
+}
 
-  // 先重置高度为 auto，以获取正确的 scrollHeight
-  el.style.height = 'auto';
-  // 设置高度为滚动高度，最大不超过 max-height (在 CSS 中控制)
-  el.style.height = `${el.scrollHeight}px`;
-};
+// 新增：滚动到底部
+const scrollToBottom = () => {
+  const container = document.querySelector('.chat-messages')
+  if (container) {
+    container.scrollTop = container.scrollHeight
+  }
+}
 </script>
 
 <template>
   <LoadingModel v-model="loading" />
-
-  <!-- 用户信息弹窗 -->
   <UserDialog :visible="isDialogShow" @close="isDialogShow = false"></UserDialog>
 
   <div class="container">
@@ -256,8 +246,6 @@ const autoResize = () => {
       <div class="new-chat" @click="handleNewChat">开始新对话</div>
       <div class="delete-chat" @click="handleDeleteAll">删除所有对话</div>
       <h3>历史记录</h3>
-
-      <!-- 左侧展示历史对话标题列表 -->
       <div class="chat-list">
         <div
           v-for="talk in talkTitleList"
@@ -266,13 +254,12 @@ const autoResize = () => {
           :class="{ active: talk.talkId === currentTalkId }"
           @click="handleClickTalkTitle(talk.talkId)">
           <span class="title">{{ talk.title }}</span>
-          <button class="delete-btn" @click="handleDeleteChat(talk.talkId)">删除</button>
+          <button class="delete-btn" @click.stop="handleDeleteChat(talk.talkId)">删除</button>
         </div>
       </div>
     </div>
 
     <div class="chat-panel">
-      <!-- 渲染产品名称以及用户信息 -->
       <header class="chat-header">
         <span class="title">Synapse MD</span>
         <div class="user" @click="handleUserClick">
@@ -281,45 +268,34 @@ const autoResize = () => {
         </div>
       </header>
 
-      <!-- 对话展示区 -->
-      <main class="chat-messages">
+      <!-- 对话展示区：添加 ref 以便滚动 -->
+      <main class="chat-messages" ref="chatContainerRef">
         <div class="chat-content" v-if="currentTalkList.length > 0">
           <div
-            v-for="(msg, i) in currentTalkList"
-            :key="i"
+            v-for="(msg, index) in currentTalkList"
+            :key="index + msg"
             class="message-wrapper"
-            :class="{ user: i % 2 === 0 }">
+            :class="{ user: index % 2 === 0 }">
 
             <div
               class="message"
-              :class="{ user: i % 2 === 0 }">
+              :class="{ user: index % 2 === 0 }">
 
-              <template v-if="i % 2 === 0">
+              <template v-if="index % 2 === 0">
                 {{ msg }}
               </template>
-
-              <div v-else class="markdown-body" v-html="renderMarkdown(msg)">
-              </div>
+              <div v-else class="markdown-body" v-html="renderMarkdown(msg)"></div>
             </div>
 
-            <!-- 复制按钮 -->
-            <button class="copy-btn" @click="handleCopy(msg)">
-              复制
-            </button>
-
+            <button class="copy-btn" @click="handleCopy(msg)">复制</button>
           </div>
-
         </div>
-        <div v-else class="empty">
-          我可以帮助您什么？
-        </div>
+        <div v-else class="empty">我可以帮助您什么？</div>
       </main>
 
-      <!-- 输入区 -->
       <div class="input-box">
-        <!-- 1. 改为 textarea，添加 rows="1" 和 @input 事件 -->
         <textarea ref="inputRef" rows="1" placeholder="请输入您的问题" v-model="message" @input="autoResize"
-          @keydown.enter.exact.prevent="sendMessage" @keydown.enter.shift="allowNewLine" />
+          @keydown.enter.exact.prevent="sendMessage" />
         <button class="send-btn" :disabled="message.trim() === '' || !canSendMessage" @click="sendMessage">
           <ArrowSVG color="#fff" size="24" />
         </button>
