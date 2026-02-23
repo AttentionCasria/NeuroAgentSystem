@@ -378,24 +378,27 @@ function fallbackCopy(text) {
       overflow-y: auto;
 
       .chat-item {
+        display: flex;
+        align-items: center; // 垂直居中
+        justify-content: space-between;
+
         padding: 10px 12px;
         border-radius: 8px;
         cursor: pointer;
         font-size: 14px;
         color: #4b5563;
         transition: all 0.15s ease;
-
         margin-bottom: 8px;
 
         .title {
-          display: block;
+          flex: 1; // 占满剩余空间
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
         }
 
         .delete-btn {
-          float: right;
+          margin-left: 8px; // 和标题拉开一点距离
           padding: 2px 6px;
           font-size: 12px;
           color: #ff4d4f;
@@ -404,6 +407,9 @@ function fallbackCopy(text) {
           border-radius: 4px;
           cursor: pointer;
           transition: all 0.15s ease;
+
+          // 防止按钮点击触发父级点击（如果有）
+          flex-shrink: 0;
         }
 
         &:hover {
