@@ -91,66 +91,74 @@ function handleNewChat() {
 }
 
 // 发送消息核心逻辑修复
+const isStreaming = ref(false)
+
+
 async function sendMessage() {
   const text = message.value.trim()
-  if (text === '' || !canSendMessage.value) return
+  if (!text || isStreaming.value) return
 
   message.value = ''
-  canSendMessage.value = false
+  isStreaming.value = true
   loading.value = true
 
-  // 1. 先上屏用户消息
+  // 1️⃣ 用户消息上屏
   currentTalkList.value.push(text)
-  nextTick(() => scrollToBottom())
+
+  // 2️⃣ AI 占位
+  currentTalkList.value.push('')
+  const aiIndex = currentTalkList.value.length - 1
+
+  nextTick(scrollToBottom)
 
   try {
-    let content = ''
+    let finalResult = null
 
     if (currentTalkId.value === 0) {
-      // 新对话
-      const res = await newChatStreamAPI({ question: text })
-      const { talkId, title, content: resContent } = res.data || {}
-
-      // 更新对话 ID 和标题
-      if (talkId) {
-        currentTalkId.value = talkId
-        const index = talkTitleList.value.findIndex(t => t.talkId === 0)
-        if (index !== -1) {
-          talkTitleList.value[index] = { talkId, title }
-        } else {
-          talkTitleList.value.unshift({ talkId, title })
+      finalResult = await newChatStreamAPI(
+        { question: text },
+        (chunk) => {
+          currentTalkList.value[aiIndex] += chunk
+          nextTick(scrollToBottom)
         }
-      }
-      content = resContent
+      )
     } else {
-      // 继续对话
-      const res2 = await sendQuestionStreamAPI({ talkId: currentTalkId.value, question: text })
-      content = res2.data?.content
+      finalResult = await sendQuestionStreamAPI(
+        {
+          talkId: currentTalkId.value,
+          question: text,
+        },
+        (chunk) => {
+          currentTalkList.value[aiIndex] += chunk
+          nextTick(scrollToBottom)
+        }
+      )
     }
 
-    // 2. 关键修复：检查 content 是否有值
-    if (content) {
-      currentTalkList.value.push(content)
-    } else {
-      // 如果流式返回为空（常见 bug），立即重新拉取历史记录作为兜底
-      console.warn('API 返回内容为空，重新拉取历史记录')
-      await fetchTalkHistory(currentTalkId.value)
-      // fetchTalkHistory 内部已经替换了 currentTalkList，无需再 push
-      return
+    const { talkId, title } = finalResult.data || {}
+
+    // ✅ 新对话真正生成 ID 后再更新
+    if (currentTalkId.value === 0 && talkId) {
+      currentTalkId.value = talkId
+
+      const index = talkTitleList.value.findIndex(t => t.talkId === 0)
+
+      if (index !== -1) {
+        talkTitleList.value[index] = { talkId, title }
+      } else {
+        talkTitleList.value.unshift({ talkId, title })
+      }
     }
 
   } catch (err) {
     console.error('发送失败', err)
-    // 失败则撤回用户消息
+    currentTalkList.value.splice(aiIndex, 1)
     currentTalkList.value.pop()
-    alert('发送失败，请重试')
+    alert('发送失败')
   } finally {
-    canSendMessage.value = true
+    isStreaming.value = false
     loading.value = false
-    nextTick(() => {
-      autoResize()
-      scrollToBottom()
-    })
+    nextTick(scrollToBottom)
   }
 }
 

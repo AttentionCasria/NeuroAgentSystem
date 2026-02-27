@@ -16,79 +16,97 @@ export const sendQuestionAPI = (params) => request.post('/user/ques/getQues', pa
 // params = { question: String }
 export const newChatAPI = (params) => request.post('/user/ques/newGetQues', params)
 
-// api/questionAPI.js
+// api/talk.js
+// api/talk.js
+
 function streamRequest(params, onChunk) {
   const userStore = useUserStore()
   const token = userStore.token
+
   return new Promise((resolve, reject) => {
     fetch('/api/user/ques/streamingQues', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        token: token,
+        token,
       },
       body: JSON.stringify(params),
     })
       .then((res) => {
-        // 处理 401 错误
-        // if (res.status === 401) {
-        //   userStore.reset()
-        //   router.push('/login')
-        //   reject(new Error('Unauthorized'))
-        //   return
-        // }
+        if (!res.body) {
+          reject(new Error('ReadableStream 不存在'))
+          return
+        }
 
         const reader = res.body.getReader()
         const decoder = new TextDecoder('utf-8')
+
         let fullAnswer = ''
+        let realTalkId = null
+        let title = '回答'
+        let finished = false
+
+        function safeResolve(payload) {
+          if (finished) return
+          finished = true
+          resolve(payload)
+        }
 
         function readChunk() {
           reader
             .read()
             .then(({ value, done }) => {
               if (done) {
-                // 最终包装成原来的接口格式
-                resolve({
-                  data: { talkId: params.talkId || Date.now(), title: '回答', content: fullAnswer },
-                })
+                // ⚠️ 不在这里 resolve
                 return
               }
 
-              const chunk = decoder.decode(value)
-              chunk.split('\n\n').forEach((line) => {
-                if (line.startsWith('data:')) {
-                  const msg = line.replace(/^data:\s*/, '')
-                  if (msg === '[完成]') {
-                    // 流结束
-                    resolve({
+              const chunk = decoder.decode(value, { stream: true })
+
+              chunk.split('\n\n').forEach((block) => {
+                if (!block.startsWith('data:')) return
+
+                const jsonStr = block.replace(/^data:\s*/, '').trim()
+                if (!jsonStr) return
+
+                try {
+                  const data = JSON.parse(jsonStr)
+
+                  if (data.type === 'init') {
+                    realTalkId = data.talkId
+                  } else if (data.type === 'chunk') {
+                    const text = data.content || ''
+                    fullAnswer += text
+                    if (onChunk) onChunk(text)
+                  } else if (data.type === 'done') {
+                    title = data.title || title
+
+                    safeResolve({
                       data: {
-                        talkId: params.talkId || Date.now(),
-                        title: '回答',
+                        talkId: realTalkId,
+                        title,
                         content: fullAnswer,
                       },
                     })
-                  } else if (!msg.startsWith('[开始处理]') && !msg.startsWith('[错误]')) {
-                    fullAnswer += msg
-                    if (onChunk) onChunk(msg)
                   }
+                } catch (e) {
+                  console.error('解析流失败', e)
                 }
               })
 
               readChunk()
             })
-            .catch((err) => reject(err))
+            .catch(reject)
         }
 
         readChunk()
       })
-      .catch((err) => reject(err))
+      .catch(reject)
   })
 }
-//    ------ 流形式 --------
-// 继续对话
+
 export const sendQuestionStreamAPI = (params, onChunk) => streamRequest(params, onChunk)
 
-// 新建对话
 export const newChatStreamAPI = (params, onChunk) => streamRequest(params, onChunk)
 
 // 5. 删除对话
