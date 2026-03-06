@@ -1,9 +1,11 @@
-# Agent/qwen/qwenAgent.py — 极速版 v2：进一步优化速度
+# qwenAgent.py — 原则驱动 + 动态结构版（修正并行调用）
 
 import logging
 import asyncio
 import json
+import time
 from typing import Generator, List, Dict, Any, Optional
+from concurrent.futures import ThreadPoolExecutor
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from config.config_loader import PromptManager, ReportTemplateManager
@@ -11,11 +13,9 @@ from config.config_loader import PromptManager, ReportTemplateManager
 logger = logging.getLogger(__name__)
 
 MAX_SUB_QUESTIONS = 3
-# 喂给 Proposer / Critic / 最终报告的证据最大字符数
-MAX_EVIDENCE_CHARS = 3000
-# 喂给最终报告的 Proposer / Critic 最大字符数
-MAX_PROPOSAL_CHARS = 3000
-MAX_CRITIQUE_CHARS = 3000
+MAX_CRITIC_SUMMARY_CHARS = 500
+MAX_EVIDENCE_FOR_REPORT = 2500
+MAX_PROPOSAL_FOR_REPORT = 2500
 
 
 class qwenAgent:
@@ -33,6 +33,7 @@ class qwenAgent:
         self.medical_assistant = medical_assistant
         self.prompts = prompt_manager
         self.reports = report_manager
+        self._thread_pool = ThreadPoolExecutor(max_workers=3)
 
     # =========================================================
     # 工具方法
@@ -54,7 +55,6 @@ class qwenAgent:
             content_str = json.dumps(content, ensure_ascii=False, indent=2)
         else:
             content_str = str(content)
-
         logger.info(f"[{step}] {title}")
         logger.info(
             content_str[:500] + ("..." if len(content_str) > 500 else "")
@@ -89,14 +89,72 @@ class qwenAgent:
         return default
 
     def _truncate(self, text: str, max_chars: int) -> str:
-        """智能截断：保留开头和结尾"""
         if not text or len(text) <= max_chars:
             return text
-        half = max_chars // 2
+        head = int(max_chars * 0.7)
+        tail = max_chars - head
         return (
-            text[:half]
-            + f"\n\n... [已截断 {len(text) - max_chars} 字符] ...\n\n"
-            + text[-half:]
+            text[:head]
+            + f"\n[...省略{len(text) - max_chars}字...]\n"
+            + text[-tail:]
+        )
+
+    def _extract_critic_summary(self, critic_raw: str) -> str:
+        if not critic_raw:
+            return "✅ 未发现被忽视的致命风险"
+        if len(critic_raw) <= MAX_CRITIC_SUMMARY_CHARS:
+            return critic_raw
+        return critic_raw[:MAX_CRITIC_SUMMARY_CHARS] + "\n[已截断]"
+
+    def _merge_evidence(self, pre: str, precise: str) -> str:
+        if not pre:
+            return precise
+        if not precise:
+            return pre
+        precise_sources = set()
+        for line in precise.split("来源:"):
+            if "》" in line:
+                precise_sources.add(line.split("》")[0][-20:])
+        extra = []
+        for block in pre.split("【文献"):
+            if block.strip() and not any(s in block for s in precise_sources):
+                extra.append("【文献" + block)
+        if extra:
+            return precise + "\n\n---\n### 补充检索\n" + "\n\n".join(extra)
+        return precise
+
+    # =========================================================
+    # 复杂度自适应 Proposer prompt
+    # =========================================================
+
+    def _build_proposer_prompt(
+        self, context_str, evidence_str, all_info_str, complexity
+    ) -> str:
+        if complexity in ("low", "medium"):
+            structure_hint = (
+                "结构要求：\n"
+                f"本病例复杂度为 {complexity}，请精简输出：\n"
+                "- 最危险问题 + 立即动作\n"
+                "- 鉴别诊断（2-3个）\n"
+                "- 关键风险点名\n"
+                "- 缺失信息"
+            )
+        else:
+            structure_hint = (
+                "结构要求：\n"
+                f"本病例复杂度为 {complexity}，请完整输出：\n"
+                "- 按气道→呼吸→循环→神经的优先级展开危险评估\n"
+                "- 鉴别诊断必须包含非卒中可能\n"
+                "- 必须评估再灌注治疗路径（溶栓/取栓的适应症与禁忌）\n"
+                "- 抗凝决策必须带前提条件\n"
+                "- 所有风险必须点名延误后果"
+            )
+
+        return _PROPOSER_TEMPLATE.format(
+            structure_hint=structure_hint,
+            context=context_str,
+            all_info=all_info_str,
+            evidence=evidence_str
         )
 
     # =========================================================
@@ -115,89 +173,19 @@ class qwenAgent:
         try:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
+            t_start = time.time()
 
-            # ══════════════════════════════════════
-            # 意图路由：使用 Qwen-Plus 过滤无关询问，并区分问诊 vs 通用知识
-            # ══════════════════════════════════════
-            intent_prompt = f"""你是意图分类专家。请判断以下输入的类型：
-- consultation: 具体患者问诊或病例分析（包含患者症状、检查等细节）
-- knowledge: 脑卒中通用知识询问（如症状、药品作用、禁忌、预防等，无具体患者细节）
-- irrelevant: 非脑卒中医疗相关
+            # ── Step 1: 统一分析 + 预检索并行 ──
+            if show_thinking:
+                yield self._emit_thinking(
+                    "Step 1", "🏥 病例分析 + 预检索并行...",
+                    "LLM结构化分析与RAG预检索同时启动"
+                )
 
-输入：{case_text}
-
-输出 JSON：
-{{
-    "type": "consultation/knowledge/irrelevant",
-    "reason": "简要原因"
-}}
-
-严格区分：如果有患者具体信息，为consultation；如果是一般性问题，为knowledge；否则irrelevant。"""
-            logging.info(f"=== 开始意图分类，输入: {case_text[:100]}... ===")
-            intent_response = loop.run_until_complete(
-                self.llm_critic.ainvoke([HumanMessage(content=intent_prompt)])
+            pre_search_future = self._thread_pool.submit(
+                self.medical_assistant.fast_parallel_retrieve,
+                [case_text[:200]]
             )
-            logging.info(f"=== 意图分类原始响应: {intent_response.content} ===")
-            intent_result = self._parse_json(intent_response.content, {"type": "irrelevant"})
-            logging.info(f"=== 意图分类解析结果: {intent_result} ===")
-            intent_type = intent_result.get("type", "irrelevant")
-            logging.info(f"=== 最终意图类型: {intent_type} ===")
-
-            if intent_type == "irrelevant":
-                logging.info("=== 意图被分类为 irrelevant，返回拒绝消息 ===")
-                yield {"type": "result", "content": "请提供脑卒中医疗临床相关查询，此输入无关。"}
-                return
-            elif intent_type == "knowledge":
-                logging.info("=== 意图被分类为 knowledge，进入知识问答流程 ===")
-                if show_thinking:
-                    yield self._emit_thinking(
-                        "Intent", "✅ 意图验证：通用知识问题", "使用 Qwen-Max 直接回答"
-                    )
-
-                # 使用 qwen-max (假设 llm_proposer 是 qwen-max) 直接回答
-                knowledge_prompt = f"""你是三甲医院神经内科主任医师。请基于循证医学知识，直接回答以下脑卒中相关通用问题。
-                问题：{case_text}
-                
-                回答要求：
-                - 用中文，简洁专业
-                - 禁止确诊语气
-                - 禁止具体剂量
-                - 如果需要，引用权威指南"""
-
-                knowledge_stream = self.llm_proposer.astream([
-                    HumanMessage(content=knowledge_prompt)
-                ])
-
-                async def consume_knowledge():
-                    async for chunk in knowledge_stream:
-                        yield chunk
-
-                agen_knowledge = consume_knowledge()
-                while True:
-                    try:
-                        chunk = loop.run_until_complete(agen_knowledge.__anext__())
-                        if isinstance(chunk, str) and chunk:
-                            yield {"type": "result", "content": chunk}
-                        elif hasattr(chunk, "content") and chunk.content:
-                            yield {"type": "result", "content": chunk.content}
-                    except StopAsyncIteration:
-                        break
-                return
-
-            # 如果是 consultation，继续完整流程
-            if show_thinking:
-                yield self._emit_thinking(
-                    "Intent", "✅ 意图验证通过", "输入为问诊相关查询"
-                )
-
-            # ══════════════════════════════════════
-            # LLM #1: 统一分析（用快速模型）
-            # ══════════════════════════════════════
-            if show_thinking:
-                yield self._emit_thinking(
-                    "Step 1", "🏥 病例分析中...",
-                    "结构化提取 + 复杂度评估 + 临床问题生成"
-                )
 
             analysis = loop.run_until_complete(
                 self._unified_analysis(case_text, all_info)
@@ -214,9 +202,10 @@ class qwenAgent:
                 clinical_questions = ["该患者当前最紧急的临床问题和处置要点"]
             clinical_questions = clinical_questions[:MAX_SUB_QUESTIONS]
 
+            t1 = time.time()
             if show_thinking:
                 yield self._emit_thinking(
-                    "Step 1", "✅ 病例分析完成", {
+                    "Step 1", f"✅ 完成 ({t1 - t_start:.1f}s)", {
                         "complexity": complexity,
                         "questions": clinical_questions,
                         "key_risks": key_risks
@@ -232,71 +221,69 @@ class qwenAgent:
                 }
             }
 
-            # ══════════════════════════════════════
-            # Step 2: 并行 RAG 检索（0 次 LLM）
-            # ══════════════════════════════════════
+            # ── Step 2: 精准检索 ──
             if show_thinking:
                 yield self._emit_thinking(
-                    "Step 2", "🔍 并行证据检索中...",
+                    "Step 2", "🔍 精准证据检索...",
                     f"检索 {len(clinical_questions)} 个子问题"
                 )
 
-            evidence = self.medical_assistant.fast_parallel_retrieve(
+            precise_evidence = self.medical_assistant.fast_parallel_retrieve(
                 clinical_questions
             )
-            # 截断证据，减少后续 token
-            evidence_truncated = self._truncate(evidence, MAX_EVIDENCE_CHARS)
+            try:
+                pre_evidence = pre_search_future.result(timeout=5)
+            except Exception:
+                pre_evidence = ""
 
+            evidence = self._merge_evidence(pre_evidence, precise_evidence)
+
+            t2 = time.time()
             if show_thinking:
                 yield self._emit_thinking(
-                    "Step 2", "✅ 证据检索完成",
-                    f"{len(evidence)} 字符 → 截断为 {len(evidence_truncated)} 字符"
+                    "Step 2", f"✅ 完成 ({t2 - t1:.1f}s)",
+                    f"{len(evidence)} 字符证据"
                 )
 
-            # ══════════════════════════════════════
-            # LLM #2 + #3: Proposer 和 Critic 并行
-            # ══════════════════════════════════════
+            # ── Step 3: Proposer + Critic 并行 ──
             if show_thinking:
                 yield self._emit_thinking(
-                    "Step 3", "🧠 Proposer + Critic 并行推理中...",
-                    "主任医师推理和质控审查同时进行"
+                    "Step 3", "🧠 决策推理 + 致命盲区检查 并行...",
+                    "ICU主治推理和质控同时进行"
                 )
 
-            proposal, critique = loop.run_until_complete(
+            proposal, critic_raw = loop.run_until_complete(
                 self._parallel_propose_and_critique(
-                    context, evidence_truncated, all_info
+                    context, evidence, all_info, complexity
                 )
             )
 
+            critic_summary = self._extract_critic_summary(critic_raw)
+
+            t3 = time.time()
             if show_thinking:
                 yield self._emit_thinking(
-                    "Step 3a", "✅ Proposer 推理完成",
-                    proposal[:800] + "..." if len(proposal) > 800 else proposal
+                    "Step 3a", f"✅ 决策推理完成 ({len(proposal)}字)",
+                    proposal
                 )
                 yield self._emit_thinking(
-                    "Step 3b", "✅ Critic 批判完成",
-                    critique[:800] + "..." if len(critique) > 800 else critique
+                    "Step 3b",
+                    f"✅ 盲区检查完成 [{t3 - t2:.1f}s]",
+                    critic_summary
                 )
 
-            # ══════════════════════════════════════
-            # LLM #4: 流式生成最终报告
-            # ══════════════════════════════════════
+            # ── Step 4: 最终报告 ──
             if show_thinking:
                 yield self._emit_thinking(
-                    "Step 4",
-                    f"📝 生成最终报告 (模式={report_mode})...",
-                    "融合推理 + 批判 → 最终临床报告"
+                    "Step 4", f"📝 生成最终报告 ({report_mode})...",
+                    "融合决策 + 盲区修正 → 最终报告"
                 )
-
-            # 截断 proposal 和 critique 减少最终报告输入 token
-            proposal_truncated = self._truncate(proposal, MAX_PROPOSAL_CHARS)
-            critique_truncated = self._truncate(critique, MAX_CRITIQUE_CHARS)
 
             final_stream = self.medical_assistant.stream_final_report(
                 context=context,
-                proposal=proposal_truncated,
-                critique=critique_truncated,
-                evidence=evidence_truncated,
+                proposal=self._truncate(proposal, MAX_PROPOSAL_FOR_REPORT),
+                critique=critic_summary,
+                evidence=self._truncate(evidence, MAX_EVIDENCE_FOR_REPORT),
                 all_info=all_info,
                 report_mode=report_mode
             )
@@ -316,31 +303,30 @@ class qwenAgent:
                 except StopAsyncIteration:
                     break
 
+            t_end = time.time()
             if show_thinking:
                 yield self._emit_thinking(
-                    "Done", "✅ 全部完成", "临床推理管线执行完毕"
+                    "Done", "✅ 全部完成",
+                    f"总耗时: {t_end - t_start:.1f}s "
+                    f"(分析{t1-t_start:.0f}s + 检索{t2-t1:.0f}s + "
+                    f"推理{t3-t2:.0f}s + 报告{t_end-t3:.0f}s)"
                 )
 
         except Exception as e:
-            logging.error(f"=== 临床推理管线异常: {e} ===")
-            logging.error(f"=== 异常类型: {type(e).__name__} ===")
+            logger.error(f"临床推理管线异常: {e}")
             import traceback
-            logging.error(f"=== 详细堆栈: {traceback.format_exc()} ===")
-            yield {"type": "error", "content": f"管线异常: {str(e)}"}
-
+            logger.error(traceback.format_exc())
+            yield {"type": "error", "content": str(e)}
         finally:
             if loop:
                 loop.close()
 
     # =========================================================
-    # LLM #1: 统一分析（用快速模型，节省 ~5s）
+    # LLM #1: 统一分析
     # =========================================================
 
-    async def _unified_analysis(
-        self, case_text: str, all_info: str
-    ) -> Dict[str, Any]:
-
-        prompt = f"""你是神经急诊专家。请对以下病例完成三项任务，一次性输出。
+    async def _unified_analysis(self, case_text, all_info):
+        prompt = f"""你是神经急诊专家。对以下病例完成三项任务，一次性输出JSON。
 
 【病例】
 {case_text}
@@ -348,7 +334,7 @@ class qwenAgent:
 【历史上下文】
 {all_info if all_info else "无"}
 
-请直接输出 JSON（不要用 markdown 代码块包裹）：
+直接输出JSON（不要代码块）：
 {{
     "structured_context": {{
         "基本信息": {{"年龄": "", "性别": ""}},
@@ -363,28 +349,20 @@ class qwenAgent:
         "非卒中线索": []
     }},
     "complexity": "low/medium/high/critical",
-    "key_risks": ["最危险的问题1", "最危险的问题2"],
+    "key_risks": ["风险1", "风险2"],
     "clinical_questions": [
-        "需查证的中文临床问题1（30字以内）",
-        "需查证的中文临床问题2",
-        "需查证的中文临床问题3"
+        "中文检索问题1（30字以内）",
+        "中文检索问题2（30字以内）",
+        "中文检索问题3（30字以内）"
     ]
-}}
+}}"""
 
-要求：
-- structured_context: 提取所有临床信息
-- complexity: critical=危及生命
-- clinical_questions: 3个最需要查证的问题，用于检索医学文献，必须用中文"""
-
-        # 用快速模型（qwen-plus），比 qwen-max 快 2-3 倍
         response = await self.llm_critic.ainvoke([
             HumanMessage(content=prompt)
         ])
-
         result = self._parse_json(response.content, None)
         if result and isinstance(result, dict):
             return result
-
         return {
             "structured_context": {"原始病例": case_text},
             "complexity": "high",
@@ -393,90 +371,113 @@ class qwenAgent:
         }
 
     # =========================================================
-    # LLM #2 + #3: Proposer 和 Critic 真正并行
+    # LLM #2 + #3: Proposer + Critic 并行
     # =========================================================
 
     async def _parallel_propose_and_critique(
-        self,
-        context: Dict,
-        evidence: str,
-        all_info: str
-    ) -> tuple:
-
+        self, context, evidence, all_info, complexity
+    ):
         context_str = json.dumps(context, ensure_ascii=False, indent=2)
         evidence_str = evidence if evidence else "未检索到相关证据"
         all_info_str = all_info if all_info else "无"
 
-        # Proposer prompt
-        proposer_prompt = self._get_prompt(
-            "proposer",
-            _FALLBACK_PROPOSER,
+        proposer_prompt = self._build_proposer_prompt(
+            context_str, evidence_str, all_info_str, complexity
+        )
+
+        critic_prompt = _CRITIC_TEMPLATE.format(
             context=context_str,
-            all_info=all_info_str,
             evidence=evidence_str
         )
 
-        # Critic prompt（预批判模式）
-        pre_critic_prompt = f"""你是临床质量控制专家和医疗安全审查员。
-
-请基于以下患者信息和医学证据，预先识别所有潜在的临床风险和容易遗漏的问题。
-
-【患者信息】
-{context_str}
-
-【医学证据】
-{evidence_str}
-
-请从以下角度系统性识别风险：
-1. 容易被忽视的鉴别诊断（非卒中可能）
-2. 气道与呼吸的隐性风险
-3. 时间窗判断的陷阱
-4. 合并症对治疗决策的影响
-5. 可能的治疗禁忌
-6. 致命性遗漏风险
-
-对每个风险给出严重程度和建议。请精简输出，重点突出。
-
-请额外输出：
-
-- 当前最可能被忽视但致命的风险（仅1项）
-- 若未处理，最可能导致的后果
-- 建议优先级
-"""
-
-        # asyncio.gather 真正并行
-        proposer_task = self.llm_proposer.ainvoke([
+        p_task = self.llm_proposer.ainvoke([
             HumanMessage(content=proposer_prompt)
         ])
-        critic_task = self.llm_critic.ainvoke([
-            HumanMessage(content=pre_critic_prompt)
+        c_task = self.llm_critic.ainvoke([
+            HumanMessage(content=critic_prompt)
         ])
 
-        proposer_resp, critic_resp = await asyncio.gather(
-            proposer_task, critic_task
-        )
-
-        return proposer_resp.content, critic_resp.content
+        p_resp, c_resp = await asyncio.gather(p_task, c_task)
+        return p_resp.content, c_resp.content
 
 
-_FALLBACK_PROPOSER = """你是三甲医院神经内科主任医师，拥有 20 年急诊经验。
+# ═══════════════════════════════════════════════════════════════
+# Proposer：原则驱动 + 动态结构
+#
+# 第一层：决策身份（1句话）
+# 第二层：三条硬性原则（不可违反，但不规定格式）
+# 第三层：语言纪律（精简为核心3条+红线4条）
+# 第四层：复杂度驱动的结构提示（自适应，由代码注入）
+# 其余：模型自由组织
+# ═══════════════════════════════════════════════════════════════
 
-【患者结构化信息】
+_PROPOSER_TEMPLATE = """本输出为ICU当班决策记录。先给立即动作，再给解释。
+
+══════════ 三条决策原则（不可违反）══════════
+
+原则一【先动作后解释】
+第一段必须是：当前最危险的问题是什么 + 立即要做什么。
+
+原则二【关键动作绑定触发条件】
+任何侵入性操作或高风险决策，必须写明客观触发条件。
+格式自由，但必须包含：若【客观指标】→【动作】
+例：GCS 5分，已丧失气道保护能力 → 立即经口气管插管。
+
+原则三【点名延误后果】
+每个关键风险必须写：不处理会怎样。
+不允许只说"存在风险"。
+
+══════════ 语言纪律 ══════════
+
+禁止模糊动词：不允许出现"可考虑""建议进一步""视情况""需要评估"。
+禁止确诊语气：使用"考虑""倾向于""不能排除"。
+禁止具体药物剂量。
+
+红线（必须主动提及，不允许遗漏）：
+- 抗凝决策必须写前提（"在影像排除出血后"）
+- 氧疗目标区分COPD（88-92%）与非COPD（>94%）
+- 出血转化风险必须主动点名
+- 溶栓如涉及，必须核查禁忌症
+
+══════════ {structure_hint} ══════���═══
+
+【患者信息】
 {context}
 
 【历史上下文】
 {all_info}
 
-【检索到的循证医学证据】
+【循证证据】
 {evidence}
 
-请给出完整临床推理：
-1. 鉴别诊断排序（至少3个，含概率区间和依据）
-2. 当前最危险的生理问题
-3. 立即行动建议（分钟级、小时级、24h内）
-4. 关键风险分析
-5. 缺失的关键信息
-6. 不确定性声明
-7. 证据支持说明
+根据病例复杂度和临床实际，自行组织最合适的输出结构。
+必须满足三条决策原则和语言纪律。优先级不能乱。"""
 
-禁止确诊语气。禁止具体药物剂量。"""
+
+# ═══════════════════════════════════════════════════════════════
+# Critic：只找被忽视的致命盲区
+# ═══════════════════════════════════════════════════════════════
+
+_CRITIC_TEMPLATE = """你是ICU质控专家。
+
+职责：指出最可能被忽视的致命风险。
+
+规则：
+- 最多3条
+- 每条不超过80字
+- 只关注"被忽视的"——显而易见的不需要重复
+- 禁止扩展解释、禁止框架、禁止评分
+
+【患者信息】
+{context}
+
+【医学证据】
+{evidence}
+
+输出：
+🔴 [被忽视的致命风险 → 不处理的后果]
+🔴 [被忽视的致命风险 → 不处理的后果]
+🔴 [被忽视的致命风险 → 不处理的后果]
+
+没有被忽视的致命风险：
+✅ 未发现"""

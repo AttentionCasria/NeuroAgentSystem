@@ -1,4 +1,4 @@
-# Agent/qwen/qwenAssistant.py — 极速版 v2
+# qwenAssistant.py — 极速版 v2
 
 import logging
 import json
