@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class AnswerVO {
-    private Integer talkId;
+    private Long talkId;
     private String title;
     private String content;
 }

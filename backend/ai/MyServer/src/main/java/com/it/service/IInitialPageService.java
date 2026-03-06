@@ -7,7 +7,7 @@ import com.it.pojo.Talk;
 import java.util.List;
 
 public interface IInitialPageService extends IService<Talk> {
-    List<InitialPageVO> getPage(Integer currentId);
+    List<InitialPageVO> getPage(Long currentId);
 
-    void deleteTalk(Integer userId, Integer talkId);
+    void deleteTalk(Long userId, Long talkId);
 }

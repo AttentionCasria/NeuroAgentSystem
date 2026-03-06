@@ -1,36 +1,36 @@
+# main.py
+
 import logging
 import sys
 import asyncio
 import concurrent.futures
 from contextlib import asynccontextmanager
 import os
-
+import json
 import jwt
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import uvicorn
 
 from Agent.qwen.qwenAgent import qwenAgent
-# 假设 NamingModel 定义在 Agent.namingModel 中
+from Agent.qwen.qwenAssistant import MedicalAssistant
 from Agent.namingModel import NamingModel
+from makeData.Retrieve import UnifiedSearchEngine, CONFIG
+from config.config_loader import get_prompt_manager, get_report_manager
 
-import os
-# 设置 HuggingFace 镜像地址
+from langchain_community.chat_models import ChatTongyi
+
 os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
-
-# 配置常量
-# 建议：生产环境请使用 os.getenv("SECRET_KEY")
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
 ALGORITHM = "HS256"
 
-# 配置日志 - 确保日志能输出到控制台
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[logging.StreamHandler(sys.stdout)]
 )
 
-# 全局资源容器
 resources = {"model": None, "naming_model": None, "executor": None}
 
 
@@ -38,37 +38,66 @@ class QueryRequest(BaseModel):
     question: str
     round: int = 2
     all_info: str = ""
-    token: str  # 必传字段
+    token: str
+    report_mode: str = "emergency"
+    show_thinking: bool = True  # 是否输出中间思考过程
+
+
+def init_all_resources():
+    logging.info(">>> 开始组装模型依赖链...")
+
+    prompt_mgr = get_prompt_manager()
+    report_mgr = get_report_manager()
+    logging.info(f">>> 可用报告模式: {report_mgr.list_modes()}")
+
+    llm_max = ChatTongyi(model_name="qwen-max")
+    llm_plus = ChatTongyi(model_name="qwen-plus")
+
+    retriever = UnifiedSearchEngine(
+        persist_dir=CONFIG.get("persist_dir", "./chroma_db_unified"),
+        top_k=CONFIG.get("top_k_final", 3)
+    )
+
+    medical_assistant = MedicalAssistant(
+        llm_main=llm_max,
+        llm_fast=llm_plus,
+        retriever=retriever,
+        prompt_manager=prompt_mgr,
+        report_manager=report_mgr
+    )
+
+    agent = qwenAgent(
+        llm_proposer=llm_max,
+        llm_critic=llm_plus,
+        medical_assistant=medical_assistant,
+        prompt_manager=prompt_mgr,
+        report_manager=report_mgr
+    )
+
+    naming_model = NamingModel()
+    return agent, naming_model
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期：模型预加载与资源清理"""
     logging.info(">>> 正在初始化资源及加载模型...")
-    # 初始化线程池
     resources["executor"] = concurrent.futures.ThreadPoolExecutor(max_workers=10)
     loop = asyncio.get_running_loop()
 
     try:
-        # 并行加载两个模型，减少启动等待时间
-        tasks = [
-            loop.run_in_executor(resources["executor"], qwenAgent),
-            loop.run_in_executor(resources["executor"], NamingModel)
-        ]
-
-        # 设置超时时间，避免无限等待
-        resources["model"], resources["naming_model"] = await asyncio.wait_for(
-            asyncio.gather(*tasks), timeout=2000.0
+        agent, naming = await loop.run_in_executor(
+            resources["executor"], init_all_resources
         )
-        logging.info(">>> 所有模型预加载完成，服务已就绪")
-    except asyncio.TimeoutError:
-        logging.error("!!! 模型加载超时，服务启动失败")
-        raise
+        resources["model"] = agent
+        resources["naming_model"] = naming
+        logging.info(">>> 所有模型组装完成，服务已就绪")
     except Exception as e:
         logging.error(f"!!! 模型初始化严重失败: {e}")
-        # 这里可以选择 raise e 来阻止服务启动
+        import traceback
+        logging.error(traceback.format_exc())
+        raise
 
-    yield  # 服务运行中
+    yield
 
     logging.info("<<< 正在释放资源...")
     if resources["executor"]:
@@ -79,87 +108,151 @@ app = FastAPI(lifespan=lifespan)
 
 
 def verify_token(token: str):
-    """校验 JWT Token"""
     try:
-        # 尝试解码
         jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        # 校验成功后打印日志
-        logging.info("--- JWT Token 校验通过 ---")
-    except jwt.ExpiredSignatureError:
-        # Token 过期时记录警告日志
-        logging.warning("--- JWT 校验失败: Token 已过期 ---")
-        raise HTTPException(status_code=401, detail="Token has expired")
-    except jwt.InvalidTokenError as e:
-        # Token 无效时记录错误日志
-        logging.error(f"--- JWT 校验失败: 无效的 Token ({e}) ---")
+    except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
 @app.post("/model/get_result")
 async def get_model_result(request: QueryRequest):
-    # 1. 安全校验
     verify_token(request.token)
 
-    # 2. 服务状态检查
-    if not resources["model"] or not resources["naming_model"]:
-        logging.error("服务未就绪：模型资源为空")
+    if not resources["model"]:
         raise HTTPException(status_code=503, detail="Model service not ready")
 
-    logging.info(f"收到用户请求: {request.question}")
+    async def generate():
+        try:
+            # 添加请求参数调试日志
+            logging.info(f"=== 开始处理请求 ===")
+            logging.info(f"请求问题: {request.question}")
+            logging.info(f"请求all_info: {request.all_info}")
+            logging.info(f"请求report_mode: {request.report_mode}")
+            logging.info(f"请求show_thinking: {request.show_thinking}")
 
+            loop = asyncio.get_running_loop()
+            stream_queue = asyncio.Queue()
+
+            def run_stream_in_thread():
+                try:
+                    for chunk in resources["model"].run_clinical_reasoning(
+                        case_text=request.question,
+                        all_info=request.all_info,
+                        report_mode=request.report_mode,
+                        show_thinking=request.show_thinking
+                    ):
+                        asyncio.run_coroutine_threadsafe(
+                            stream_queue.put(chunk), loop
+                        )
+                except Exception as e:
+                    logging.error(f"模型流式生成出错: {e}")
+                    import traceback
+                    logging.error(traceback.format_exc())
+                    asyncio.run_coroutine_threadsafe(
+                        stream_queue.put({"type": "error", "content": str(e)}),
+                        loop
+                    )
+                finally:
+                    asyncio.run_coroutine_threadsafe(
+                        stream_queue.put(None), loop
+                    )
+
+            loop.run_in_executor(resources["executor"], run_stream_in_thread)
+
+            naming_future = None
+            if not request.all_info:
+                naming_future = loop.run_in_executor(
+                    resources["executor"],
+                    resources["naming_model"].run_naming,
+                    request.question
+                )
+
+            generated_name = None
+            while True:
+                item = await stream_queue.get()
+                # 在第167行之后添加：
+                if item is None:
+                    yield json.dumps({"type": "done", "content": ""}, ensure_ascii=False) + "\n"
+                    break
+
+                if isinstance(item, dict) and item.get("type") == "error":
+                    yield json.dumps(
+                        {"error": item["content"]}, ensure_ascii=False
+                    ) + "\n"
+                    break
+
+                if naming_future and naming_future.done() and not generated_name:
+                    try:
+                        generated_name = naming_future.result()
+                    except Exception:
+                        generated_name = "咨询"
+
+                response_chunk = {}
+
+                chunk_type = item.get("type", "") if isinstance(item, dict) else ""
+
+                if chunk_type == "result":
+                    content = item["content"]
+                    if hasattr(content, "content"):
+                        content = content.content
+                    response_chunk["result"] = str(content)
+
+                elif chunk_type == "thinking":
+                    response_chunk["thinking"] = {
+                        "step": item.get("step", ""),
+                        "title": item.get("title", ""),
+                        "content": str(item.get("content", ""))
+                    }
+
+                elif chunk_type == "meta":
+                    response_chunk["meta"] = item["content"]
+
+                if generated_name:
+                    response_chunk["name"] = generated_name
+
+                if response_chunk:
+                    yield json.dumps(
+                        response_chunk, ensure_ascii=False
+                    ) + "\n"
+
+        except Exception as e:
+            logging.error(f"generate() 外层异常: {e}")
+            import traceback
+            logging.error(traceback.format_exc())
+            yield json.dumps({"error": str(e)}, ensure_ascii=False) + "\n"
+
+    # 第215行，修改为：
+    return StreamingResponse(
+        generate(),
+        media_type="text/plain",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*"
+        }
+    )
+
+@app.post("/admin/reload_config")
+async def reload_config():
     try:
-        loop = asyncio.get_running_loop()
-        executor = resources["executor"]
-        tasks = []
-
-        logging.info("正在提交主模型计算任务...")
-        # 3. 构建主模型任务 (run 方法通常包含 I/O 或 heavy compute)
-        tasks.append(loop.run_in_executor(
-            executor,
-            resources["model"].run,
-            request.question,
-            request.round,
-            request.all_info
-        ))
-
-        # 4. 根据条件构建取名任务 (并行处理)
-        # 只有在初次对话（没有 all_info）时才生成标题
-        needs_naming = not request.all_info
-        if needs_naming:
-            logging.info("检测到新对话，正在提交命名任务...")
-            tasks.append(loop.run_in_executor(
-                executor,
-                resources["naming_model"].run_naming,
-                request.question
-            ))
-
-        # 5. 并行执行并获取结果
-        results = await asyncio.gather(*tasks)
-
-        # 结果解包
-        model_res, summary = results[0]
-        # 如果并没有运行 naming 任务，则 name 为 None
-        name = results[1] if needs_naming and len(results) > 1 else None
-
-        # --- 新增：打印 AI 输出结果关键信息 ---
-        log_res = model_res[:50] + "..." if len(model_res) > 50 else model_res
-        logging.info(f"AI 回复内容预览: {log_res}")
-        if name:
-            logging.info(f"AI 生成标题: {name}")
-        logging.info("请求处理完成")
-        # ------------------------------------
-
-        return {"result": model_res, "summary": summary, "name": name}
-
+        get_prompt_manager().reload()
+        get_report_manager().reload()
+        return {"status": "ok", "message": "配置已热更新"}
     except Exception as e:
-        logging.error(f"请求处理发生异常: {e}", exc_info=True)
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-if __name__ == '__main__':
+@app.get("/admin/report_modes")
+async def list_report_modes():
+    mgr = get_report_manager()
+    modes = mgr.list_modes()
+    return {
+        "modes": [
+            {"key": m, "name": mgr.get_template_name(m)}
+            for m in modes
+        ]
+    }
 
-    # 启动服务
-    # host="0.0.0.0" 允许外部访问
-    # port=8000 指定端口
-    logging.info("正在启动 FastAPI 服务...")
+
+if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

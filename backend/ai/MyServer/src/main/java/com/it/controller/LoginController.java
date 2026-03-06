@@ -21,16 +21,13 @@ public class LoginController {
     private final ILoginService loginService;
 
     @PostMapping("/register")
-    public Result register(@RequestBody User user){
+    public Result register(@RequestBody User user) {
         return regiService.insertUser(user);
     }
-
     @PostMapping("/login")
     public Result login(@RequestBody User user) {
         return loginService.loginInto(user);
     }
-
-
     @PostMapping("/logOut")
     public Result logOut(HttpServletRequest request){
         return loginService.logOut(request.getHeader("token"));

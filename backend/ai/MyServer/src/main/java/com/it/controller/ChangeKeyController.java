@@ -14,7 +14,6 @@ public class ChangeKeyController {
     @Autowired
     private IChangeKeyService changeKeyService;
 
-
     @PutMapping("/changeKey")
     public Result changeKey(@RequestBody ChangeKey changeKey) {
         return changeKeyService.changeKeyById(ThreadLocalUtil.getCurrentUser().getId(),changeKey);

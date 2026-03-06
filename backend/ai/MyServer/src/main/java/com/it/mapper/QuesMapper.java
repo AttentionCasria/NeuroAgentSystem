@@ -7,15 +7,15 @@ import java.util.List;
 
 @Mapper
 public interface QuesMapper {
-    public String findExContent(Integer userId, Integer talkId);
+    public String findExContent(Long userId, Long talkId);
 
-    boolean notNULL(Integer userId, Integer talkId);
+    boolean notNULL(Long userId, Long talkId);
 
     void insertTalk(Talk talk);
 
     void updateTalk(Talk currentTalk);
 
-    List<String> findAllExContent(Integer userId, Integer talkId);
+    List<String> findAllExContent(Long userId, Long talkId);
 
-    void insertContent(Integer userId, Integer talkId, String content, String createTime);
+    void insertContent(Long userId, Long talkId, String content, String createTime);
 }

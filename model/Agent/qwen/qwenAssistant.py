@@ -1,250 +1,203 @@
+# Agent/qwen/qwenAssistant.py — 极速版 v2
+
 import logging
-import re
-from typing import List, Dict, Tuple, Any
-import traceback
+import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List, AsyncGenerator, Dict
 
-from dotenv import load_dotenv
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
-
+from langchain_core.messages import HumanMessage, SystemMessage
 from Agent.qwen.medicalAgent import MedicalReActAgent
-# 【修复】替换失效的函数引用，使用统一检索引擎和配置
-from makeData.Retrieve import UnifiedSearchEngine, CONFIG
+from config.config_loader import PromptManager, ReportTemplateManager
 
-load_dotenv()
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 class MedicalAssistant:
-    # 系统提示词常量
 
-    # 1. 强化“拆解逻辑”与“关联性”
-    SYS_DECOMPOSER = (
-        "You are a Clinical Logic Analyst. Your expertise lies in deconstructing complex "
-        "patient complaints into high-value retrieval queries. You prioritize 'Symptom Clustering' "
-        "over isolated symptoms—when symptoms co-occur, you focus on their pathological links "
-        "and common etiologies to ensure more precise medical evidence retrieval."
-    )
+    def __init__(
+        self,
+        llm_main=None,
+        llm_fast=None,
+        retriever=None,
+        prompt_manager: PromptManager = None,
+        report_manager: ReportTemplateManager = None,
+        llm=None,
+    ):
+        if llm_main is None:
+            llm_main = llm
+        if llm_fast is None:
+            llm_fast = llm_main
 
-    # 2. 强化“证据合成”与“临床决策支撑”
-    SYS_DOCTOR = (
-        "You are a Senior Attending Physician specializing in Evidence-Based Medicine (EBM). "
-        "Your role is to synthesize retrieved medical literature with patient histories to provide "
-        "structured diagnostic reasoning and treatment suggestions. You prioritize patient safety, "
-        "differential diagnosis, and the latest clinical guidelines in your professional analysis."
-    )
+        self.llm = llm_main
+        self.llm_fast = llm_fast
+        self.retriever = retriever
+        self.prompts = prompt_manager
+        self.reports = report_manager
 
-    def __init__(self, llm, retriever=None):
-        self.llm = llm
+        self.agent = MedicalReActAgent(
+            llm_main=self.llm,
+            llm_fast=self.llm_fast,
+            retriever=self.retriever,
+            prompt_manager=self.prompts
+        )
 
-        if retriever:
-            self.retriever = retriever
-            logger.info("✅ [MedicalAssistant] 复用已有的检索引擎")
-        else:
-            logger.info("🔧 [MedicalAssistant] 初始化检索引擎...")
-            try:
-                # 1. 初始化检索引擎
-                # 请确保 CONFIG 字典中必须有 'persist_dir' 和 'top_k_per_store' 这两个Key
-                # 否则这里会抛出 KeyError
-                self.retriever = UnifiedSearchEngine(
-                    persist_dir=CONFIG.get("persist_dir", "./chroma_db_unified"),  # 增加默认值防崩
-                    top_k=CONFIG.get("top_k_per_store", 4)
-                )
-            except Exception as e:
-                # 【修改点2】打印完整的堆栈信息！
-                logger.error("❌ [MedicalAssistant] 初始化严重失败，详细堆栈如下：")
-                logger.error(traceback.format_exc())  # <--- 这行代码能告诉你具体死在哪一行
-                # 重新抛出异常，让 main.py 知道启动失败了
-                raise RuntimeError(f"MedicalAssistant Init Failed: {str(e)}")
+        logger.info("✅ MedicalAssistant（极速版 v2）初始化完成")
 
-        try:
-            # 2. 初始化 Agent
-            # 如果 medicalAgent.py 里面有代码错误（如 logger 未定义），这里会报错
-            self.agent = MedicalReActAgent(self.llm, self.retriever)
+    # =========================================================
+    # 极速并行检索（0 次 LLM）
+    # =========================================================
 
-            logger.info("✅ [MedicalAssistant] Agent 就绪")
-        except Exception as e:
-             logger.error("❌ [MedicalAssistant] Agent 初始化失败")
-             raise RuntimeError(f"MedicalAssistant Agent Init Failed: {str(e)}")
-
-    def decompose_and_diagnose(self, sum_talk: List[str], original_result: str, all_info: str, content: str) -> Tuple[str, Dict[str, str]]:
-        """执行分解诊断全流程（带详细日志追踪）"""
-        logger.info("=" * 40)
-        logger.info("🚀 [MedicalAssistant] 开始执行分解诊断全流程")
-
-        # 1. 拆分子问题
-        logger.info("🔹 [Step 1/4] 正在根据病史拆解临床子问题 (LLM Thinking)...")
-        sub_questions_raw = self._decompose_questions(sum_talk)
-
-        # 2. 解析问题列表
-        questions = self._parse_questions(sub_questions_raw)
-        logger.info(f"🔹 [Step 2/4] 解析得到 {len(questions)} 个关键子问题:")
-        for idx, q in enumerate(questions, 1):
-            logger.info(f"    {idx}. {q}")
-
-        # 3. 针对性检索
-        logger.info(f"🔹 [Step 3/4] 开始针对子问题进行证据检索 (Search)...")
-        per_q_results = self._retrieve_evidence(questions)
-        logger.info("✅ [Step 3/4] 证据检索完成")
-
-        # 4. 综合诊断
-        logger.info("🔹 [Step 4/4] 汇总证据，生成综合诊断报告 (LLM Diagnosis)...")
-        diagnosis = self._generate_diagnosis(original_result, questions, per_q_results, content, all_info)
-
-        logger.info("🎉 [MedicalAssistant] 流程结束，诊断生成完毕。")
-        logger.info("=" * 40)
-        return diagnosis, per_q_results
-
-    def _invoke_llm(self, system_content: str, user_content: str) -> str:
-        """封装大模型调用与结果解析"""
-        try:
-            response = self.llm.invoke([
-                SystemMessage(content=system_content),
-                HumanMessage(content=user_content)
-            ])
-            return response.content.strip() if isinstance(response, AIMessage) else str(response).strip()
-        except Exception as e:
-            logger.error(f"❌ LLM 调用失败: {e}")
+    def fast_parallel_retrieve(self, sub_questions: List[str]) -> str:
+        if not sub_questions:
             return ""
 
-    def _decompose_questions(self, sum_talk: List[str]) -> str:
-        # """步骤一：生成英文分解问题（强化医疗关联规则版）"""
-        prompt_parts = [
-            "### Role",
-            "You are a medical clinical expert specialized in diagnostic reasoning.",
-            "",
-            "### Task",
-            # 修改 1：明确要求输出中文，以匹配中文临床文档库
-            "Analyze the following patient complaint summaries (sum_talk) and decompose them into 3 concise Chinese sub-questions optimized for RAG retrieval against Chinese clinical guidelines.",
-            "",
-            "### Decomposition Rules (Clinical Logic)",
-            "1. **Symptom Clustering**: ...",
-            "2. **Contextual Specificity**: ...",
-            "3. **Retrieval Focus**: Formulate questions that help differentiate between similar conditions based on the patterns found in the summaries.",
-            "",
-            "### Constraints",
-            "- Generate exactly 3 sub-questions.",
-            # 修改 2：语言一致性
-            "- Each sub-question must be one concise sentence in Chinese.",
-            "- Use standard Chinese medical terminology (e.g., use '基底动脉尖综合征' instead of 'TOBS').",
-            "- Focus on high-frequency and clinically significant symptoms in the provided list.",
-            "",
-            "### Patient Complaint Summaries (sum_talk):",
-        ]
-        # prompt_parts = [
-        #     "### Role",
-        #     "You are a medical clinical expert specialized in diagnostic reasoning.",
-        #     "",
-        #     "### Task",
-        #     "Analyze the following patient complaint summaries (sum_talk) and decompose them into 3 concise English sub-questions for medical evidence retrieval.",
-        #     "",
-        #     "### Decomposition Rules (Clinical Logic)",
-        #     "1. **Symptom Clustering**: If two or more symptoms co-occur (e.g., headache and nausea), prioritize a combined search logic (e.g., 'symptom A accompanied by symptom B') to explore potential underlying etiologies, rather than decomposing them into isolated symptoms.",
-        #     "2. **Contextual Specificity**: Each sub-question must include specific symptoms and their associated clinical scenarios (e.g., 'common causes of headache accompanied by nausea' or 'diagnostic evaluation for chronic cough with fever').",
-        #     "3. **Retrieval Focus**: Formulate questions that help differentiate between similar conditions based on the patterns found in the summaries.",
-        #     "",
-        #     "### Constraints",
-        #     "- Generate exactly 3 sub-questions.",
-        #     "- Each sub-question must be one concise sentence in English.",
-        #     "- Focus on high-frequency and clinically significant symptoms in the provided list.",
-        #     "",
-        #     "### Patient Complaint Summaries (sum_talk):",
-        # ]
-        prompt_parts.extend([f"- {talk}" for talk in sum_talk])
-        prompt = "\n".join(prompt_parts)
-
-        result = self._invoke_llm(self.SYS_DECOMPOSER, prompt)
-        return result
-
-    def _parse_questions(self, raw_text: str) -> List[str]:
-        """解析 LLM 返回的子问题文本"""
-        if not raw_text:
-            return []
-
-        """步骤二：解析问题文本结构"""
-        questions = []
-        for line in raw_text.splitlines():
-            line = line.strip()
-            if not line:
-                continue
-
-            # 匹配数字开头的列表项 (如 "1. xxx" 或 "1) xxx")
-            m = re.match(r'^\s*\d+[\.\)\、]\s*(.+)', line)
-            if m:
-                questions.append(m.group(1).strip())
-            else:
-                # 匹配破折号开头的项
-                if line.startswith('-'):
-                    q = line.lstrip('-').strip()
-                    if q:
-                        questions.append(q)
-                else:
-                    questions.append(line)
-
-        # 校验问题数量，如果不合理则使用原始内容
-        if not (1 <= len(questions) <= 7):
-            logger.warning(f"⚠️ 子问题解析格式异常，退回使用原始内容: {raw_text}")
-            return [raw_text]
-        return questions
-
-    def _retrieve_evidence(self, questions: List[str]) -> Dict[str, str]:
-        """步骤三：改用 Agent 进行动态检索，支持多步思考和工具调用"""
-        # --- 新增逻辑：如果列表为空，直接返回 ---
-        if not questions:
-            logger.info("⚠️ [MedicalAssistant] 检测到无有效子问题，跳过 Agent 检索逻辑。")
-            return {}
-        # ------------------------------------
+        logger.info(f"🔍 快速并行检索 {len(sub_questions)} 个子问题...")
 
         results = {}
-        for i, q in enumerate(questions, 1):
-            try:
-                logger.info(f"🧠 [Agent Loop] 正在处理第 {i} 个子问题: {q}")
+        worker_count = min(len(sub_questions), 3)
 
-                # 调用 Agent 的 run 方法
-                # system_prompt 依然使用你定义的 SYS_DECOMPOSER
-                evidence = self.agent.run(
-                    system_prompt=self.SYS_DECOMPOSER,
-                    user_question=q
-                )
+        with ThreadPoolExecutor(max_workers=worker_count) as executor:
+            future_map = {
+                executor.submit(self.agent.fast_retrieve, q): q
+                for q in sub_questions
+            }
 
-                results[q] = evidence
-            except Exception as e:
-                logger.error(f"❌ Agent 处理问题 '{q}' 失败: {e}")
-                results[q] = f"Agent 检索过程中出错: {e}"
-        return results
+            for future in as_completed(future_map):
+                q = future_map[future]
+                try:
+                    results[q] = future.result()
+                except Exception as e:
+                    logger.error(f"子问题检索失败: {q} | {e}")
+                    results[q] = ""
 
-    def _generate_diagnosis(self, original_result, questions, per_q_results, content, all_info) -> str:
-        """步骤四：构建提示词并生成最终诊断"""
         parts = []
-        # 严格保持原有提示词结构
-        parts.append("Below is the patient's original medical history information (patient_result):")
-        parts.append(original_result)
-        parts.append("——————")
+        for i, q in enumerate(sub_questions):
+            r = results.get(q, "")
+            if r:
+                parts.append(f"### 检索维度{i+1}: {q}\n{r}")
 
-        parts.append("Sub-questions to focus on (in English):")
-        for idx, q in enumerate(questions, start=1):
-            parts.append(f"{idx}. {q}")
-        parts.append("——————")
+        combined = "\n\n---\n\n".join(parts)
+        logger.info(f"🔍 检索完成，总长度: {len(combined)} 字符")
+        return combined
 
-        parts.append("Below are the summary search results corresponding to each sub-question:")
-        parts.append(
-            f"Please focus solely on avoiding and addressing the symptoms of {original_result}. The following sub-questions are for reference only, and must be explicitly addressed in the response without evasion.")
+    # =========================================================
+    # 完整版（保留）
+    # =========================================================
 
-        for idx, q in enumerate(questions, start=1):
-            summary = per_q_results.get(q, "")
-            parts.append(f"{idx}. Sub-question: {q}")
-            parts.append(f"   Search summary: {summary}")
+    def parallel_retrieve_and_synthesize(
+        self, sub_questions: List[str]
+    ) -> str:
+        if not sub_questions:
+            return ""
 
-        parts.append(f"Note: Please focus particularly on {content}")
-        parts.append(
-            "Please, based on the original medical history, sub-questions, and their respective search results, provide several most likely comprehensive diagnostic considerations, but avoid making overly certain judgments. Please note that the sub-questions are only to broaden your thinking; focus more on the original medical history.")
-        parts.append(
-            "Note: If you believe the information initially provided by the patient is not typical or insufficient, you may reasonably continue to ask the patient based on your judgment.")
-        parts.append(f"Below is the previous conversation information\n{all_info}")
-        parts.append(
-            "Important notice: Please ensure that the final response is entirely in Chinese; do not reply in any other language.")
+        results = {}
+        worker_count = min(len(sub_questions), 3)
 
-        prompt = "\n".join(parts)
+        with ThreadPoolExecutor(max_workers=worker_count) as executor:
+            future_map = {
+                executor.submit(self.agent.run, q): q
+                for q in sub_questions
+            }
+            for future in as_completed(future_map):
+                q = future_map[future]
+                try:
+                    results[q] = future.result()
+                except Exception as e:
+                    logger.error(f"子问题检索失败: {q} | {e}")
+                    results[q] = "未检索到直接证据"
 
-        diagnosis = self._invoke_llm(self.SYS_DOCTOR, prompt)
-        return diagnosis if diagnosis else "❌ 综合诊断过程中发生错误，未生成有效回应。"
+        parts = []
+        for i, q in enumerate(sub_questions):
+            parts.append(
+                f"### 检索维度{i+1}: {q}\n{results.get(q, '未检索到')}"
+            )
+        return "\n\n---\n\n".join(parts)
+
+    # =========================================================
+    # 快速通道
+    # =========================================================
+
+    async def stream_fast_response(
+        self, case_text: str, evidence: str = ""
+    ) -> AsyncGenerator[str, None]:
+        try:
+            prompt = (
+                f"你是三甲医院神经内科主任医师。\n\n"
+                f"【患者信息】\n{case_text}\n\n"
+                f"【参考证据】\n{evidence if evidence else '无'}\n\n"
+                f"请简洁回答，禁止确诊语气，禁止具体剂量。"
+            )
+
+            if self.prompts:
+                p = self.prompts.get(
+                    "fast_track",
+                    case_text=case_text,
+                    evidence=evidence if evidence else "无"
+                )
+                if p:
+                    prompt = p
+
+            messages = [
+                SystemMessage(content=self.reports.system_role),
+                HumanMessage(content=prompt)
+            ]
+
+            async for chunk in self.llm_fast.astream(messages):
+                if hasattr(chunk, "content") and chunk.content:
+                    yield chunk.content
+                elif isinstance(chunk, str) and chunk:
+                    yield chunk
+
+        except Exception as e:
+            logger.exception("❌ 快速通道响应失败")
+            yield "⚠️ 系统异常，请结合临床独立判断。"
+
+    # =========================================================
+    # 流式生成最终报告
+    # =========================================================
+
+    async def stream_final_report(
+        self,
+        context: Dict,
+        proposal: str,
+        critique: str,
+        evidence: str,
+        all_info: str = "",
+        report_mode: str = "emergency"
+    ) -> AsyncGenerator[str, None]:
+
+        try:
+            template_name = self.reports.get_template_name(report_mode)
+            logger.info(f"📝 生成报告: {template_name} (模式={report_mode})")
+
+            report_template = self.reports.get_template(report_mode)
+
+            context_str = (
+                json.dumps(context, ensure_ascii=False, indent=2)
+                if isinstance(context, dict) else str(context)
+            )
+
+            prompt_text = report_template.format(
+                context=context_str,
+                all_info=all_info if all_info else "无历史记录",
+                evidence=evidence if evidence else "未检索到相关证据",
+                proposal=proposal if proposal else "无",
+                critique=critique if critique else "无批判意见"
+            )
+
+            messages = [
+                SystemMessage(content=self.reports.system_role),
+                HumanMessage(content=prompt_text)
+            ]
+
+            async for chunk in self.llm.astream(messages):
+                if hasattr(chunk, "content") and chunk.content:
+                    yield chunk.content
+                elif isinstance(chunk, str) and chunk:
+                    yield chunk
+
+            logger.info("✅ 报告生成完成")
+
+        except Exception as e:
+            logger.exception("❌ 报告生成失败")
+            yield "⚠️ 系统异常，请结合临床独立判断。"

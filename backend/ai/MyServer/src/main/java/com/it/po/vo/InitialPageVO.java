@@ -1,5 +1,7 @@
 package com.it.po.vo;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class InitialPageVO {
-    private Integer talkId;
+    @JsonSerialize(using = ToStringSerializer.class)
+    private Long talkId;
     private String title;
 }

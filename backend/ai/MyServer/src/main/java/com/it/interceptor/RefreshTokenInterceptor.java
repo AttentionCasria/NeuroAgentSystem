@@ -3,6 +3,7 @@ package com.it.interceptor;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.it.po.dto.UserDTO;
+import com.it.po.uo.User;
 import com.it.utils.JWT;
 import com.it.utils.ThreadLocalUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,7 +33,7 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
 
         try {
             // 1. 解析 Token 获取用户 ID 和 JTI
-            Integer userId = JWT.getUserIdFromToken(token);
+            Long userId = JWT.getUserIdFromToken(token);
 
             Object jtiObj = JWT.parseToken(token).get("jti");
             if (jtiObj == null) {
@@ -62,7 +63,7 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
             Map<Object, Object> userMap = stringRedisTemplate.opsForHash().entries("user:token:" + token);
             if (!userMap.isEmpty()) {
                 UserDTO userDTO = BeanUtil.fillBeanWithMap(userMap, new UserDTO(), false);
-                ThreadLocalUtil.setCurrentUser(userDTO);
+                ThreadLocalUtil.setCurrentUser((User) userDTO);
                 // 延长 Token 有效期
                 stringRedisTemplate.expire("user:token:" + token, 30, TimeUnit.MINUTES);
             }

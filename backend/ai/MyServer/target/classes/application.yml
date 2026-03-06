@@ -4,7 +4,7 @@ spring:
   main:
     allow-circular-references: true  # 允许循环依赖，解决启动报错问题
   profiles:
-    active: prod  # 宝塔无法识别动态变量，改为固定值
+    active: prod  # 本地开发使用dev，线上部署使用 --spring.profiles.active=prod
 
   datasource:
     url: jdbc:mysql://${aiserver.datasource.host}:${aiserver.datasource.port}/${aiserver.datasource.database}?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&characterEncoding=utf8
@@ -26,6 +26,7 @@ spring:
     redis:
       host: ${aiserver.redis.host}
       port: ${aiserver.redis.port}
+      password: ${aiserver.redis.password}
       database: 0
       timeout: 5000ms
       lettuce:
@@ -41,11 +42,26 @@ spring:
     time-zone: Asia/Shanghai
     date-format: yyyy-MM-dd HH:mm:ss
 
-mybatis:
-  configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-    map-underscore-to-camel-case: true
 
+      # 规则持久化（如果使用 Nacos，可放开注释）
+      # datasource:
+      #   flow:
+      #     nacos:
+      #       server-addr: 127.0.0.1:8848
+      #       data-id: MyServer-flow
+      #       group-id: DEFAULT_GROUP
+      #       data-type: json
+    #       rule-type: flow
+
+# Sentinel 日志目录（必须有权限写入）
+
+mybatis-plus:
+  global-config:
+    db-config:
+      ddl: false  # 关键点：禁用 DDL 运行器，解决 NullBean 报错
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 将原 mybatis 下的配置移至此处
+    map-underscore-to-camel-case: true
 # AI 服务配置
 ai:
   api:
@@ -84,49 +100,25 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
+# 限流配置
+rate-limiter:
+  global:
+    limit: 200
+    interval: 1
+  ip:
+    limit: 30
+    interval: 60
+  user:
+    limit: 3
+    interval: 60
 
-
-#spring:
-#  application:
-#    name: MyServer
-#  profiles:
-#    active: dev
-#  datasource:
-#    url: jdbc:mysql://localhost:3306/medai
-#    driver-class-name: ${aiserver.datasource.driver-class-name}
-#    username: ${aiserver.datasource.username}
-#    password: ${aiserver.datasource.password}
-#  mvc:
-#    async:
-#      request-timeout: 600000   # 单位毫秒，10分钟
-#  data:
-#    redis:
-#      host: 192.168.2.161
-#      port: 6379
-#      password: 123
-#      lettuce:
-#        pool:
-#          max-active: 10
-#          max-idle: 10
-#          min-idle: 1
-#          time-between-eviction-runs: 10s
-#  jackson:
-#    default-property-inclusion: non_null # JSON处理时忽略非空字段
-#mybatis:
-#  configuration:
-#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-## 原有配置...
-#ai:
-#  api:
-#    url: http://localhost:8000/model/get_result  # FastAPI 接口地址
-#
-#alioss:
-#  endpoint: ${aiserver.alioss.endpoint}
-#  bucketName: ${aiserver.alioss.bucketName}
-#  region: ${aiserver.alioss.region}
-#
-#server:
-#  tomcat:
-#    connection-timeout: 660s   # 设置请求响应超时为 60 秒
-#
-#
+# 熔断配置
+resilience4j:
+  circuitbreaker:
+    instances:
+      default:
+        register-health-indicator: true
+        sliding-window-size: 100
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s

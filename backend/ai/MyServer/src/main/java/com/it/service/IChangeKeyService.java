@@ -7,7 +7,9 @@ import com.it.po.uo.User;
 
 public interface IChangeKeyService extends IService<User>{
 
-    Result changeKeyById(Integer currentId, ChangeKey changeKey);
+    Result changeKeyById(Long currentId, ChangeKey changeKey);
 
-    Result getUserInfo(Integer currentId);
+
+
+    Result getUserInfo(Long currentId);
 }

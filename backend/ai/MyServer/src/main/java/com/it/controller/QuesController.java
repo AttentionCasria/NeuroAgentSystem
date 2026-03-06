@@ -1,18 +1,22 @@
 package com.it.controller;
 
-import com.it.utils.ThreadLocalUtil;
-import com.it.po.vo.AnswerVO;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.it.po.uo.QuesParam;
 import com.it.pojo.Result;
-import com.it.service.IQuesService;
-import jakarta.servlet.http.HttpServletResponse;
+import com.it.pojo.Talk;
+import com.it.service.AIStreamingService;
+import com.it.utils.ThreadLocalUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -21,65 +25,145 @@ import java.util.List;
 @RequiredArgsConstructor
 public class QuesController {
 
-    private final IQuesService quesService;
+    private final AIStreamingService streamingService;
+    private final ObjectMapper objectMapper;
 
-    @PostMapping("/getQues")
-    public Result getQues(@RequestBody QuesParam quesParam, @RequestHeader(value = "token", required = false) String token)
-    {
-        log.info("用户在询问信息"+quesParam.getQuestion());
-        return Result.success(quesService.getQues(quesParam,ThreadLocalUtil.getCurrentUser().getId(),token));
-    }
     @GetMapping("/getQues/{talk_id}")
-    public Result getPreContent(@PathVariable("talk_id") Integer talkId){
-        Integer userId = ThreadLocalUtil.getCurrentUser().getId();
-        return Result.success(quesService.getPreContent(userId,talkId));
+    public Result getPreContent(@PathVariable("talk_id") String talkIdStr) {
+        Long talkId = Long.parseLong(talkIdStr);
+        log.info("收到对话内容请求: talkId={}", talkId);  // 添加这行
+        if (talkId == null || talkId <= 0) {
+            return Result.success(List.of());
+        }
+        if (ThreadLocalUtil.getCurrentUser() == null) {
+            return Result.error("未登录");
+        }
+        Long userId = ThreadLocalUtil.getCurrentUser().getId();
+        return Result.success(streamingService.getPreContent(userId, talkId));
     }
 
+    @PostMapping(value = "/streamingQues", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<String>> streamingQues(
+            @RequestBody QuesParam quesParam,
+            @RequestHeader(value = "token", required = false) String token
+    ) {
+        if (ThreadLocalUtil.getCurrentUser() == null) {
+            return Flux.just(sse("message", json("error", mapOf("message", "未登录"))));
+        }
 
-    @PostMapping("/newGetQues")
-    public Result newGetQues(@RequestBody QuesParam quesParam, @RequestHeader(value = "token", required = false) String token){
-        log.info("用户在询问信息"+quesParam.getQuestion());
-        return Result.success(quesService.getQues(quesParam,ThreadLocalUtil.getCurrentUser().getId(),token));
-    }
+        Long userId = ThreadLocalUtil.getCurrentUser().getId();
+        String talkIdStr = quesParam.getTalkId();
+        Long talkId = null;
 
-    @PostMapping("/streamingQues")
-    public void streamingQues(@RequestBody QuesParam quesParam,
-                              HttpServletResponse response,
-                              @RequestHeader(value = "token", required = false) String token) {
-        log.info("用户使用流式响应询问信息: {}", quesParam.getQuestion());
-        Integer userId = ThreadLocalUtil.getCurrentUser().getId();
-
-        response.setContentType("text/event-stream;charset=UTF-8");
-        response.setHeader("Cache-Control", "no-cache");
-        response.setHeader("Connection", "keep-alive");
-        response.setHeader("Access-Control-Allow-Origin", "*");
-
-        try (PrintWriter writer = response.getWriter()) {
-            writer.write("data: [开始处理] 正在为您生成回答...\n\n");
-            writer.flush();
-
-            AnswerVO answer = quesService.getQues(quesParam, userId,token);
-            String content = answer.getContent();
-            int chunkSize = 20;
-
-            for (int i = 0; i < content.length(); i += chunkSize) {
-                int end = Math.min(i + chunkSize, content.length());
-                writer.write("data: " + content.substring(i, end) + "\n\n");
-                writer.flush();
-                Thread.sleep(100);
-            }
-
-            writer.write("data: [完成]\n\n");
-            writer.flush();
-        } catch (Exception e) {
-            log.error("流式响应处理失败", e);
+        if (talkIdStr != null && !talkIdStr.isBlank()) {
             try {
-                response.getWriter().write("data: [错误] " + e.getMessage() + "\n\n");
-                response.getWriter().flush();
-            } catch (IOException ex) {
-                log.error("发送错误消息失败", ex);
+                talkId = Long.parseLong(talkIdStr);
+                if (talkId != null && talkId <= 0) {
+                    talkId = null;
+                }
+            } catch (NumberFormatException e) {
+                talkId = null; // 非法 talkId 当作新对话处理
             }
+        }
+
+        boolean needCreate = (talkId == null || talkId <= 0);
+
+        if (!needCreate) {
+            Talk dbTalk = streamingService.getTalkById(talkId);
+            if (dbTalk == null || !dbTalk.getUserId().equals(userId)) {
+                needCreate = true;
+            }
+        }
+
+        if (needCreate) {
+            talkId = streamingService.createNewTalk(userId);
+            log.info("创建新对话 talkId = {}", talkId);
+        }
+
+        final Long finalTalkId = talkId;
+        final boolean finalNeedCreate = needCreate;
+
+        // ===== 统一 JSON 协议 =====
+
+        Flux<String> initFlux = Flux.just(
+                json("init", mapOf(
+                        "talkId", finalTalkId.toString(),
+                        "newTalk", finalNeedCreate
+                ))
+        );
+
+        Flux<String> resumeFlux = Flux.defer(() -> {
+            String resume = streamingService.getResumeContent(userId, finalTalkId);
+            if (resume == null || resume.isBlank()) {
+                return Flux.empty();
+            }
+            return Mono.fromCallable(() -> json("resume", mapOf(
+                    "talkId", finalTalkId.toString(),
+                    "content", resume
+            ))).flux();
+        });
+
+        Flux<String> chatFlux = streamingService
+                .streamChat(userId, finalTalkId, quesParam.getQuestion(), token)
+                .map(this::wrapChunkIfNeeded);
+
+        return initFlux
+                .concatWith(resumeFlux)
+                .concatWith(chatFlux)
+                .onErrorResume(e -> Flux.just(
+                        json("error", mapOf(
+                                "talkId", finalTalkId.toString(),
+                                "message", e.getMessage() == null ? "stream error" : e.getMessage()
+                        )),
+                        json("done", mapOf(
+                                "talkId", finalTalkId.toString(),
+                                "title", "异常结束"
+                        ))
+                ))
+                .map(data -> sse("message", data));
+
+    }
+
+    private ServerSentEvent<String> sse(String event, String data) {
+        return ServerSentEvent.<String>builder()
+                .data(data)   // ❗去掉 event
+                .build();
+    }
+
+    private String wrapChunkIfNeeded(String data) {
+        if (data == null) {
+            return json("chunk", mapOf("content", ""));
+        }
+        String trimmed = data.trim();
+        if (!trimmed.isEmpty() && trimmed.startsWith("{") && trimmed.endsWith("}")) {
+            return data;
+        }
+        return json("chunk", mapOf("content", data));
+    }
+
+    private String json(String type, Map<String, Object> payload) {
+        try {
+            Map<String, Object> root = new HashMap<>();
+            root.put("type", type);
+            if (payload != null && !payload.isEmpty()) {
+                root.putAll(payload);
+            }
+            return objectMapper.writeValueAsString(root);
+        } catch (Exception e) {
+            return "{\"type\":\"error\",\"message\":\"json serialize error\"}";
         }
     }
 
+    private Map<String, Object> mapOf(Object k1, Object v1) {
+        Map<String, Object> m = new HashMap<>();
+        m.put(String.valueOf(k1), v1);
+        return m;
+    }
+
+    private Map<String, Object> mapOf(Object k1, Object v1, Object k2, Object v2) {
+        Map<String, Object> m = new HashMap<>();
+        m.put(String.valueOf(k1), v1);
+        m.put(String.valueOf(k2), v2);
+        return m;
+    }
 }

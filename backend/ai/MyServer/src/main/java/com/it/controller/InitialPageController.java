@@ -21,8 +21,8 @@ public class InitialPageController {
     }
 
     @DeleteMapping("deleteTalk/{talk_id}")
-    public Result deleteTalk(@PathVariable("talk_id") Integer talkId){
-        Integer userId = ThreadLocalUtil.getCurrentUser().getId();
+    public Result deleteTalk(@PathVariable("talk_id") Long talkId){
+        Long userId = ThreadLocalUtil.getCurrentUser().getId();
         initialPageService.deleteTalk(userId,talkId);
         return Result.success();
     }

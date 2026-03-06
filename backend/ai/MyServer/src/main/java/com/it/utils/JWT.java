@@ -25,8 +25,8 @@ public class JWT {
                 .getBody();
     }
 
-    public static Integer getUserIdFromToken(String token) {
-        return Integer.valueOf(parseToken(token).get("id").toString());
+    public static Long getUserIdFromToken(String token) {
+        return Long.valueOf(parseToken(token).get("id").toString());
     }
 
     // --- 新增：从 Token 中获取 JTI ---

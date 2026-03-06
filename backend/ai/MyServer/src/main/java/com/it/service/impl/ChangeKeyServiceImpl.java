@@ -9,6 +9,7 @@ import com.it.service.IChangeKeyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -16,12 +17,13 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ChangeKeyServiceImpl extends ServiceImpl<ChangeKeyMapper, User> implements IChangeKeyService {
 
     private final StringRedisTemplate stringRedisTemplate;
 
     @Override
-    public Result changeKeyById(Integer currentId, ChangeKey changeKey) {
+    public Result changeKeyById(Long currentId, ChangeKey changeKey) {
         String password = stringRedisTemplate.opsForValue().get("user:password:" + currentId);
         if(password != null)
         {
@@ -40,7 +42,7 @@ public class ChangeKeyServiceImpl extends ServiceImpl<ChangeKeyMapper, User> imp
     }
 
     @Override
-    public Result getUserInfo(Integer currentId) {
+    public Result getUserInfo(Long currentId) {
         User user = query().eq("id", currentId).one();
         return Result.success(user);
     }

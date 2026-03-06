@@ -1,105 +1,213 @@
-import json
+# Agent/qwen/medicalAgent.py — 极速版 v2：rerank 失败时 graceful fallback
+
 import logging
-from typing import List, Dict, Any
+import traceback
+import time
+from typing import List, Optional
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from dotenv import load_dotenv
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
-
+from langchain_core.messages import SystemMessage, HumanMessage
 from makeData.Retrieve import UnifiedSearchEngine, CONFIG
+from config.config_loader import PromptManager
 
-
-load_dotenv()
 logger = logging.getLogger(__name__)
 
 
 class MedicalReActAgent:
-    def __init__(self, llm, retriever: UnifiedSearchEngine):
-        self.llm = llm
+
+    _FALLBACK_SEARCH_PROMPT = """你是医学检索专家。
+根据以下临床问题生成 2 个精准中文检索关键词组合。
+每行一个，必须使用中文医学术语，不要解释。
+临床问题：{question}"""
+
+    _FALLBACK_EVIDENCE_PROMPT = """你是循证医学证据整理专家。
+临床问题：{question}
+检索文献：{evidence}
+任务：提取与问题直接相关的事实，保留推荐等级和具体数字。"""
+
+    def __init__(
+        self,
+        llm_main,
+        llm_fast,
+        retriever: UnifiedSearchEngine,
+        prompt_manager: Optional[PromptManager] = None
+    ):
+        self.llm_main = llm_main
+        self.llm_fast = llm_fast
         self.retriever = retriever
-        self.tools_schema = [
-            {
-                "type": "function",
-                "function": {
-                    "name": "search_clinical_guidelines",
-                    "description": "搜索临床诊疗指南和医学文献。",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "query": {"type": "string", "description": "医学搜索关键词"}
-                        },
-                        "required": ["query"]
-                    }
-                }
-            }
-        ]
+        self.prompts = prompt_manager
 
-    def _execute_tool(self, name: str, args: dict) -> str:
-        """执行具体的工具逻辑"""
-        if name == "search_clinical_guidelines":
-            try:
-                query = args.get("query")
-                if not query:
-                    return "Error: No query provided"
+    # ============================
+    # 极速模式：直接检索，0 次 LLM
+    # ============================
 
-                docs = self.retriever.search(query, top_k_final=CONFIG.get("top_k_final", 4))
-                if not docs:
-                    return "未检索到相关文档。"
-
-                return "\n\n".join([f"{doc.page_content}" for doc in docs])  # 移除【证据】标记
-            except Exception as e:
-                logger.error(f"❌ 检索出错: {e}")
-                return f"检索服务异常: {str(e)}"
-
-        return f"未知工具: {name}"
-
-    def run(self, system_prompt: str, user_question: str, max_steps: int = 3) -> str:
-        """
-        完全避免 ToolMessage，改用纯文本传递工具结果
-        """
-        logger.info(f"🚀 [Agent Start] 处理问题: {user_question}")
-
-        collected_evidence = []  # 收集所有检索结果
-
+    def fast_retrieve(self, question: str) -> str:
+        """直接用问题文本检索，不经过LLM。"""
         try:
-            # 第一次调用：让模型决定是否需要工具
-            messages = [
-                SystemMessage(content=system_prompt),
-                HumanMessage(content=user_question)
-            ]
+            t0 = time.time()
+            logger.info(f"📋 [MedicalAgent] 快速检索: {question[:60]}...")
 
-            response = self.llm.invoke(messages, tools=self.tools_schema)
+            top_k = CONFIG.get("top_k_final", 3)
 
-            # 如果模型直接回答，不调用工具
-            if not response.tool_calls:
-                return str(response.content)
+            # 带重试的检索（应对 rerank rate limit）
+            docs = self._search_with_retry(question, top_k)
 
-            # 执行所有工具调用
-            logger.info(f"🤖 需要调用 {len(response.tool_calls)} 个工具")
-            for tool_call in response.tool_calls:
-                tool_name = tool_call["name"]
-                tool_args = tool_call["args"]
+            if not docs:
+                logger.warning(f"  ⚠️ 未检索到文档: {question[:40]}")
+                return ""
 
-                observation = self._execute_tool(tool_name, tool_args)
-                collected_evidence.append(f"检索关键词: {tool_args.get('query')}\n\n检索结果:\n{observation}")
+            elapsed = time.time() - t0
+            logger.info(
+                f"  📄 命中 {len(docs)} 条文档 ({elapsed:.1f}s)"
+            )
 
-            # 【核心改动】将工具结果作为新的用户消息传递
-            # 不使用 ToolMessage，避免 "Got unknown type" 错误
-            evidence_text = "\n\n---\n\n".join(collected_evidence)
-            final_messages = [
-                SystemMessage(content=system_prompt),
-                HumanMessage(
-                    content=f"原始问题: {user_question}\n\n我已为您检索到以下医学文献证据:\n\n{evidence_text}\n\n请基于这些证据给出专业的医学分析。")
-            ]
+            results = []
+            for i, doc in enumerate(docs):
+                source = doc.metadata.get(
+                    "source", "未知"
+                ).replace(".pdf", "")
+                page = doc.metadata.get("page", "?")
+                score = doc.metadata.get("relevance_score", "N/A")
 
-            # 第二次调用：让模型基于证据生成答案（不带 tools 参数）
-            final_response = self.llm.invoke(final_messages)
-            return str(final_response.content)
+                logger.info(
+                    f"    文献{i+1}: 《{source}》p.{page} "
+                    f"(相关度:{score})"
+                )
+
+                # 限制每条文档长度，减少总 token
+                content = doc.page_content[:400]
+                results.append(
+                    f"【文献{i+1}】[来源: 《{source}》 p.{page}] "
+                    f"(相关度:{score})\n{content}"
+                )
+
+            return "\n\n".join(results)
 
         except Exception as e:
-            logger.error(f"⚠️ Agent 执行出错: {e}")
+            logger.error(f"快速检索失败: {e}")
+            return ""
 
-            # 降级策略：直接返回检索到的原始证据
-            if collected_evidence:
-                return "（由于系统原因，以下是为您检索到的原始医学文献）:\n\n" + "\n\n".join(collected_evidence)
+    def _search_with_retry(self, query, top_k, max_retries=2):
+        """带重试的检索，应对 rerank API rate limit"""
+        for attempt in range(max_retries + 1):
+            try:
+                return self.retriever.search(query, top_k)
+            except Exception as e:
+                err_str = str(e)
+                if "RateQuota" in err_str or "rate limit" in err_str.lower():
+                    if attempt < max_retries:
+                        wait = 1.0 * (attempt + 1)
+                        logger.warning(
+                            f"  ⚠️ Rerank 限流，{wait}s 后重试 "
+                            f"({attempt+1}/{max_retries})"
+                        )
+                        time.sleep(wait)
+                        continue
+                # 非限流错误或重试耗尽
+                raise
+        return []
 
-            return "很抱歉，当前服务繁忙，请稍后再试。"
+    # ============================
+    # 完整模式（保留）
+    # ============================
+
+    def run(self, question: str) -> str:
+        try:
+            logger.info(f"📋 [MedicalAgent] 完整处理: {question}")
+
+            queries = self._generate_search_queries(question)
+            logger.info(f"  🔑 生成检索关键词: {queries}")
+
+            evidence_text = self._parallel_search(queries)
+            logger.info(f"  📚 检索到证据: {len(evidence_text)} 字符")
+
+            if not evidence_text:
+                return "未检索到相关医学文献。"
+
+            result = self._synthesize_evidence(question, evidence_text)
+            logger.info(f"  ✅ 证据整合完成")
+            return result
+
+        except Exception as e:
+            logger.error(f"MedicalReActAgent错误: {e}")
+            logger.error(traceback.format_exc())
+            return "证据层运行异常。"
+
+    def _generate_search_queries(self, question: str) -> List[str]:
+        prompt = None
+        if self.prompts:
+            prompt = self.prompts.get(
+                "search_query_generation", question=question
+            )
+        if not prompt:
+            prompt = self._FALLBACK_SEARCH_PROMPT.format(question=question)
+
+        resp = self.llm_fast.invoke([
+            SystemMessage(content="你是医学检索专家。请用中文回答。"),
+            HumanMessage(content=prompt)
+        ])
+
+        lines = [
+            l.strip().lstrip("0123456789.-·•) ")
+            for l in resp.content.split("\n")
+            if l.strip() and len(l.strip()) > 2
+        ]
+
+        chinese_lines = [
+            l for l in lines
+            if any('\u4e00' <= c <= '\u9fff' for c in l)
+        ]
+
+        if chinese_lines:
+            return chinese_lines[:2]
+        elif lines:
+            return lines[:2]
+        else:
+            cn_chars = ''.join(
+                c for c in question if '\u4e00' <= c <= '\u9fff'
+            )
+            return [cn_chars[:30]] if cn_chars else [question[:50]]
+
+    def _parallel_search(self, queries: List[str]) -> str:
+        results = []
+        with ThreadPoolExecutor(max_workers=min(3, len(queries))) as executor:
+            future_map = {
+                executor.submit(
+                    self._search_with_retry, q, CONFIG.get("top_k_final", 3)
+                ): q for q in queries
+            }
+            for future in as_completed(future_map):
+                q = future_map[future]
+                try:
+                    docs = future.result()
+                    for i, doc in enumerate(docs):
+                        source = doc.metadata.get(
+                            "source", "未知"
+                        ).replace(".pdf", "")
+                        page = doc.metadata.get("page", "?")
+                        score = doc.metadata.get("relevance_score", "N/A")
+                        results.append(
+                            f"【{q}-文献{i+1}】"
+                            f"[来源: 《{source}》 p.{page}] "
+                            f"(相关度:{score})\n"
+                            f"{doc.page_content[:500]}"
+                        )
+                except Exception as e:
+                    logger.error(f"检索失败 [{q}]: {e}")
+        return "\n\n".join(results)
+
+    def _synthesize_evidence(self, question: str, evidence: str) -> str:
+        prompt_text = None
+        if self.prompts:
+            prompt_text = self.prompts.get(
+                "evidence_synthesis", question=question, evidence=evidence
+            )
+        if not prompt_text:
+            prompt_text = self._FALLBACK_EVIDENCE_PROMPT.format(
+                question=question, evidence=evidence
+            )
+        resp = self.llm_main.invoke([
+            SystemMessage(content="你是循证医学专家。请用中文回答。"),
+            HumanMessage(content=prompt_text)
+        ])
+        return resp.content

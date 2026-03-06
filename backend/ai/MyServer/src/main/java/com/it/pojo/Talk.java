@@ -1,19 +1,23 @@
 package com.it.pojo;
 
-
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Builder;
 import lombok.Data;
+import java.time.LocalDateTime;
 
 @Data
+@TableName("talk")
 @Builder
 public class Talk {
-    @TableId(type = IdType.AUTO)
-    private Integer id;
-    private Integer userId;
+
+    // 关键：前端传入时间戳
+    @TableId(type = IdType.INPUT)
+    private Long id;
+
+    private Long userId;
     private String title;
     private String content;
-    private String createTime;
-    private String updateTime;
+
+    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 }

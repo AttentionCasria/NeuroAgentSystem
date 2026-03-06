@@ -4,7 +4,7 @@ aiserver:
     host: ${DB_HOST:127.0.0.1}  # 从环境变量读取
     port: ${DB_PORT:3306}
     database: ${DB_NAME:medai}
-    username: ${DB_USER:root}
+    username: ${DB_USER:medai_user}
     password: ${DB_PASSWORD}  # 必须从环境变量读取
 
   redis:
@@ -20,6 +20,16 @@ aiserver:
     bucketName: ${OSS_BUCKET:darkside}
     access-key-id: ${OSS_ACCESS_KEY_ID:LTAI5tCsXMzZtiBxnUgqKPNA}
     access-key-secret: ${OSS_ACCESS_KEY_SECRET:Bkp8ixYCRDicOWLeclRqdPvlNoxMiK}
+
+
+# 修正：使用 mybatis-plus 标签并关闭 ddl
+mybatis-plus:
+  global-config:
+    db-config:
+      ddl: false
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
 
 # 生产环境日志
 logging:
