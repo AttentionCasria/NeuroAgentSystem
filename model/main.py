@@ -13,9 +13,9 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import uvicorn
 
-from Agent.qwen.qwenAgent import qwenAgent
-from Agent.qwen.qwenAssistant import MedicalAssistant
-from Agent.namingModel import NamingModel
+from Agent.qwen.qwen_agent import qwenAgent
+from Agent.qwen.qwen_assistant import MedicalAssistant
+from utils.naming_model import NamingModel
 from makeData.Retrieve import UnifiedSearchEngine, CONFIG
 from config.config_loader import get_prompt_manager, get_report_manager
 

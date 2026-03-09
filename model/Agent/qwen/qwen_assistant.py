@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, AsyncGenerator, Dict
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from Agent.qwen.medicalAgent import MedicalReActAgent
+from Agent.qwen.medical_agent import MedicalReActAgent
 from config.config_loader import PromptManager, ReportTemplateManager
 
 logger = logging.getLogger(__name__)
