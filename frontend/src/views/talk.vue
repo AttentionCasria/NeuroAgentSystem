@@ -221,7 +221,7 @@ async function handleDeleteAll() {
 }
 
 function handleUserClick() {
-  isDialogShow.value = true
+  isDialogShow.value = !isDialogShow.value
 }
 
 function handleCopy(text) {
@@ -262,7 +262,6 @@ const scrollToBottom = () => {
 
 <template>
   <LoadingModel v-model="loading" />
-  <UserDialog :visible="isDialogShow" @close="isDialogShow = false"></UserDialog>
 
   <div class="container">
     <div class="chat-history">
@@ -284,6 +283,7 @@ const scrollToBottom = () => {
         <div class="user" @click="handleUserClick">
           <AppAvatar class="avatar" :src="userStore.image" :name="userStore.name" :size="32" alt="avatar" />
           <p class="username">{{ userStore.name }}</p>
+          <UserDialog :visible="isDialogShow" @close="isDialogShow = false"></UserDialog>
         </div>
       </header>
 
@@ -453,6 +453,7 @@ const scrollToBottom = () => {
       }
 
       .user {
+        position: relative;
         display: flex;
         align-items: center;
         gap: 10px;

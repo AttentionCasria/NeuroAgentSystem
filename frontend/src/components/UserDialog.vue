@@ -1,99 +1,361 @@
 <script setup>
-import EditForm from './form/EditForm.vue'
-defineProps({
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+import { logoutAPI, updateInfoAPI } from '@/api/user'
+import AvatarUpload from './AvatarUpload.vue'
+
+const props = defineProps({
   visible: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['close'])
 
-const close = () => {
+const router = useRouter()
+const userStore = useUserStore()
+const menuRef = ref(null)
+
+const isPasswordDialogVisible = ref(false)
+const isAvatarDialogVisible = ref(false)
+
+const passwordForm = ref({
+  prePassword: '',
+  newPassword: ''
+})
+const image = ref(userStore.image || '')
+
+watch(
+  () => userStore.image,
+  (value) => {
+    image.value = value || ''
+  }
+)
+
+const closeMenu = () => {
   emit('close')
+}
+
+const handleGlobalClick = (event) => {
+  if (!props.visible) return
+  if (!menuRef.value) return
+  if (menuRef.value.contains(event.target)) return
+  closeMenu()
+}
+
+onMounted(() => {
+  document.addEventListener('mousedown', handleGlobalClick)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', handleGlobalClick)
+})
+
+const openPasswordDialog = () => {
+  isPasswordDialogVisible.value = true
+  closeMenu()
+}
+
+const openAvatarDialog = () => {
+  image.value = userStore.image || ''
+  isAvatarDialogVisible.value = true
+  closeMenu()
+}
+
+const handleAvatarUploadSuccess = (url) => {
+  image.value = url
+}
+
+const performLogout = async () => {
+  try {
+    await logoutAPI()
+  } catch (error) {
+    console.error('退出登录失败，执行本地登出', error)
+  } finally {
+    userStore.reset()
+    router.replace('/login')
+  }
+}
+
+const handleLogout = async () => {
+  closeMenu()
+  await performLogout()
+}
+
+const handleChangePassword = async () => {
+  const prePassword = String(passwordForm.value.prePassword || '').trim()
+  const newPassword = String(passwordForm.value.newPassword || '').trim()
+
+  if (prePassword.length < 6 || newPassword.length < 6) {
+    alert('旧密码和新密码至少为6位')
+    return
+  }
+
+  try {
+    await updateInfoAPI({
+      prePassword,
+      newPassword,
+      image: userStore.image || ''
+    })
+    alert('密码修改成功，请重新登录')
+    isPasswordDialogVisible.value = false
+    passwordForm.value.prePassword = ''
+    passwordForm.value.newPassword = ''
+    await performLogout()
+  } catch (error) {
+    console.error('修改密码失败', error)
+    alert('旧密码错误或修改失败')
+  }
+}
+
+const handleChangeAvatar = async () => {
+  if (!image.value) {
+    alert('请先上传头像')
+    return
+  }
+
+  try {
+    await updateInfoAPI({
+      prePassword: '',
+      newPassword: '',
+      image: image.value
+    })
+    userStore.image = image.value
+    alert('头像修改成功')
+    isAvatarDialogVisible.value = false
+  } catch (error) {
+    console.error('修改头像失败', error)
+    alert('头像修改失败，请稍后重试')
+  }
 }
 </script>
 
 <template>
-  <!-- 过渡动画 -->
+  <transition name="fade-slide">
+    <div v-if="visible" ref="menuRef" class="user-menu" @click.stop>
+      <button type="button" class="menu-item" @click="openPasswordDialog">修改密码</button>
+      <button type="button" class="menu-item" @click="openAvatarDialog">修改头像</button>
+      <button type="button" class="menu-item danger" @click="handleLogout">退出登录</button>
+    </div>
+  </transition>
+
   <transition name="fade">
-    <div v-if="visible" class="overlay">
-      <transition name="zoom">
-        <div class="dialog" v-if="visible">
-          <!-- 头部 -->
-          <div class="dialog-header">
-            <h2>设置</h2>
-            <button class="close-btn" @click="close">&times;</button>
-          </div>
-
-
-          <!-- 编辑信息 -->
-          <div>
-            <EditForm></EditForm>
-          </div>
-
+    <div v-if="isPasswordDialogVisible" class="dialog-overlay" @click.self="isPasswordDialogVisible = false">
+      <div class="dialog-card" @click.stop>
+        <div class="dialog-header">
+          <h3>修改密码</h3>
+          <button type="button" class="close-btn" @click="isPasswordDialogVisible = false">&times;</button>
         </div>
-      </transition>
+
+        <div class="dialog-body">
+          <label>
+            旧密码
+            <input v-model="passwordForm.prePassword" type="password" placeholder="请输入旧密码" />
+          </label>
+          <label>
+            新密码
+            <input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码" />
+          </label>
+        </div>
+
+        <div class="dialog-footer">
+          <button type="button" class="plain-btn" @click="isPasswordDialogVisible = false">取消</button>
+          <button type="button" class="primary-btn" @click="handleChangePassword">确认修改</button>
+        </div>
+      </div>
+    </div>
+  </transition>
+
+  <transition name="fade">
+    <div v-if="isAvatarDialogVisible" class="dialog-overlay" @click.self="isAvatarDialogVisible = false">
+      <div class="dialog-card" @click.stop>
+        <div class="dialog-header">
+          <h3>修改头像</h3>
+          <button type="button" class="close-btn" @click="isAvatarDialogVisible = false">&times;</button>
+        </div>
+
+        <div class="dialog-body avatar-body">
+          <AvatarUpload :initialAvatar="image" :initialName="userStore.name" @uploaded="handleAvatarUploadSuccess" />
+        </div>
+
+        <div class="dialog-footer">
+          <button type="button" class="plain-btn" @click="isAvatarDialogVisible = false">取消</button>
+          <button type="button" class="primary-btn" @click="handleChangeAvatar">保存头像</button>
+        </div>
+      </div>
     </div>
   </transition>
 </template>
 
-
 <style lang="scss" scoped>
-/* 遮罩层 */
-.overlay {
+.user-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 160px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
+  padding: 6px;
+  z-index: 40;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    right: 18px;
+    width: 10px;
+    height: 10px;
+    border-top: 1px solid #e5e7eb;
+    border-left: 1px solid #e5e7eb;
+    background: #fff;
+    transform: rotate(45deg);
+  }
+
+  .menu-item {
+    width: 100%;
+    border: none;
+    background: transparent;
+    text-align: left;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #334155;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    &.danger {
+      color: #dc2626;
+
+      &:hover {
+        background: #fef2f2;
+      }
+    }
+  }
+}
+
+.dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(15, 23, 42, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: 90;
 }
 
-/* 弹出框 */
-.dialog {
-  background: #000000;
-  border-radius: 10px;
-  width: 320px;
-  max-width: 90%;
-  padding: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+.dialog-card {
+  width: min(92vw, 420px);
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.24);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
 
   .dialog-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    border-bottom: 1px solid #e5e7eb;
 
-    h2 {
-      font-size: 18px;
+    h3 {
       margin: 0;
+      font-size: 17px;
+      color: #0f172a;
     }
 
     .close-btn {
-      background: none;
       border: none;
-      font-size: 20px;
+      background: transparent;
+      font-size: 22px;
+      line-height: 1;
+      color: #64748b;
       cursor: pointer;
-      color: #666;
 
       &:hover {
-        color: #fff;
+        color: #334155;
+      }
+    }
+  }
+
+  .dialog-body {
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      color: #334155;
+      font-size: 14px;
+    }
+
+    input {
+      height: 40px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 0 12px;
+      font-size: 14px;
+      color: #0f172a;
+
+      &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
       }
     }
 
+    &.avatar-body {
+      align-items: center;
+    }
   }
 
-  .dialog-content {
-    margin: 15px 0;
-    font-size: 14px;
-    color: #333;
-  }
+  .dialog-footer {
+    padding: 14px 18px 18px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
 
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.15s ease;
+    }
+
+    .plain-btn {
+      background: #f1f5f9;
+      color: #334155;
+
+      &:hover {
+        background: #e2e8f0;
+      }
+    }
+
+    .primary-btn {
+      background: #3b82f6;
+      color: #fff;
+
+      &:hover {
+        background: #2563eb;
+      }
+    }
+  }
 }
 
-
-/* 遮罩层淡入淡出 */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s ease;
 }
 
 .fade-enter-from,
@@ -101,15 +363,14 @@ const close = () => {
   opacity: 0;
 }
 
-/* 弹窗缩放淡入淡出 */
-.zoom-enter-active,
-.zoom-leave-active {
-  transition: all 0.25s ease;
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-.zoom-enter-from,
-.zoom-leave-to {
+.fade-slide-enter-from,
+.fade-slide-leave-to {
   opacity: 0;
-  transform: scale(0.9);
+  transform: translateY(-6px);
 }
 </style>
