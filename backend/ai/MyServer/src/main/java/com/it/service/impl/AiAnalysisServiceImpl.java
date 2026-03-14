@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -170,7 +171,7 @@ public class AiAnalysisServiceImpl implements IAiAnalysisService {
             body.put("report_mode", "analysis");
             body.put("show_thinking", false);
 
-            // 收集完整的流式响应
+            // 收集完整的流式响应；最长等待 5 分钟，超时后释放 Tomcat 线程
             List<String> lines = webClient.post()
                     .uri("/model/get_result")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -178,6 +179,7 @@ public class AiAnalysisServiceImpl implements IAiAnalysisService {
                     .bodyValue(body)
                     .retrieve()
                     .bodyToFlux(String.class)
+                    .timeout(Duration.ofMinutes(5))
                     .collectList()
                     .block();
 

@@ -31,6 +31,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -38,6 +39,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 @Service
@@ -64,6 +66,11 @@ public class AIStreamingServiceImpl implements AIStreamingService {
     private static final int SEMAPHORE_PERMITS = 20;
     private static final String DEFAULT_REPORT_MODE = "emergency";
     private static final boolean DEFAULT_SHOW_THINKING = true;
+
+    /** 发送给模型的历史上下文最大字符数，防止超出模型 Token 上限 */
+    private static final int MAX_HISTORY_CHARS = 8000;
+    /** 流式响应逐块最大等待时间，超时视为模型挂起 */
+    private static final Duration CHUNK_TIMEOUT = Duration.ofSeconds(120);
 
     @PostConstruct
     public void init() {
@@ -206,6 +213,8 @@ public class AIStreamingServiceImpl implements AIStreamingService {
                 .bodyValue(request)
                 .retrieve()
                 .bodyToFlux(String.class)
+                // 每个数据块最多等待 CHUNK_TIMEOUT，防止模型中途挂起导致连接永久卡死
+                .timeout(CHUNK_TIMEOUT)
 
                 .filter(line -> line != null && !line.trim().isEmpty())
                 .map(String::trim)
@@ -252,11 +261,21 @@ public class AIStreamingServiceImpl implements AIStreamingService {
 
                 .onErrorResume(WebClientResponseException.class, e -> {
                     log.error("调用 AI 服务失败: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString(), e);
-                    return buildErrorAndDone(finalTalkId, e.getStatusCode() + " " + e.getStatusText());
+                    // 401 说明两端 JWT 密钥不一致，给出明确提示；其余返回通用消息，不暴露内部细节
+                    String msg = e.getStatusCode().value() == 401
+                            ? "AI 服务认证失败，请检查 AI_JWT_SECRET 配置是否与后端 AI_API_SHARED_JWT_SECRET 一致"
+                            : "AI 服务暂时不可用，请稍后重试";
+                    return buildErrorAndDone(finalTalkId, msg);
                 })
                 .onErrorResume(e -> {
+                    boolean isTimeout = e instanceof TimeoutException
+                            || (e.getCause() instanceof TimeoutException);
+                    if (isTimeout) {
+                        log.warn("AI 流式响应超时（{}s 内无数据块）: talkId={}", CHUNK_TIMEOUT.getSeconds(), finalTalkId);
+                        return buildErrorAndDone(finalTalkId, "AI 响应超时，请稍后重试");
+                    }
                     log.error("流式生成异常", e);
-                    return buildErrorAndDone(finalTalkId, e.getMessage() == null ? "AI 服务异常" : e.getMessage());
+                    return buildErrorAndDone(finalTalkId, "AI 服务异常，请稍后重试");
                 })
 
                 .doFinally(signal -> log.info("流完成: signal={}", signal));
@@ -426,7 +445,19 @@ public class AIStreamingServiceImpl implements AIStreamingService {
             sb.append(i % 2 == 0 ? "user: " : "assistant: ")
                     .append(history.get(i).getContent()).append("\n");
         }
-        return sb.toString();
+        String result = sb.toString();
+
+        // 超出上限时从头部截断，保留最近的对话轮次，避免超过模型 Token 上限
+        if (result.length() > MAX_HISTORY_CHARS) {
+            result = result.substring(result.length() - MAX_HISTORY_CHARS);
+            // 截到第一个完整行，避免从行中间截断
+            int firstNewline = result.indexOf('\n');
+            if (firstNewline >= 0 && firstNewline < result.length() - 1) {
+                result = result.substring(firstNewline + 1);
+            }
+            log.warn("历史上下文超过 {} 字符限制已截断: userId={}, talkId={}", MAX_HISTORY_CHARS, userId, talkId);
+        }
+        return result;
     }
 
     private boolean allowAICircuit() {
