@@ -1,142 +1,257 @@
 <script setup>
-import { onMounted, ref, nextTick } from 'vue'
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
-import UserDialog from '@/components/UserDialog.vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import AppAvatar from '@/components/AppAvatar.vue'
+import UserDialog from '@/components/UserDialog.vue'
+import ChatWorkspace from '@/components/workspace/ChatWorkspace.vue'
+import LearningWorkspace from '@/components/workspace/LearningWorkspace.vue'
+import PatientFormDialog from '@/components/workspace/PatientFormDialog.vue'
+import PatientWorkspace from '@/components/workspace/PatientWorkspace.vue'
+import WorkspaceTabs from '@/components/workspace/WorkspaceTabs.vue'
 import { useUserStore } from '@/stores/user'
-import { deleteChatAPI, getChatHistoryAPI, getChatTitlesAPI, newChatStreamAPI, sendQuestionStreamAPI } from '@/api/talk'
-import LoadingModel from '@/components/LoadingModel.vue'
-import DeleteSVG from '@/components/svg/DeleteSVG.vue'
-import DeleteAllSVG from '@/components/svg/DeleteAllSVG.vue'
-// 假设 ArrowSVG 是全局组件或已注册，如果不是请取消下面注释并导入
-// import ArrowSVG from '@/components/ArrowSVG.vue'
+import {
+  deleteChatAPI,
+  getChatHistoryAPI,
+  getChatTitlesAPI,
+  newChatStreamAPI,
+  sendQuestionStreamAPI,
+} from '@/api/talk'
+import {
+  createPatientAPI,
+  deletePatientAPI,
+  getPatientDetailAPI,
+  getPatientsAPI,
+  updatePatientAPI,
+} from '@/api/patient'
+import { getLearningMaterialDetailAPI, getLearningMaterialsAPI } from '@/api/learning'
+import { analyzePatientAPI, syncTalkToPatientAPI } from '@/api/ai'
 
 defineOptions({ name: 'TalkIndex' })
 
-const message = ref('')
-const isDialogShow = ref(false)
-const userStore = useUserStore()
-const talkTitleList = ref([])
-const inputRef = ref(null)
-const chatContainerRef = ref(null) // 用于滚动到底部
+const tabs = [
+  { key: 'chat', label: '智能问诊', hint: '对话与同步分析' },
+  { key: 'patients', label: '患者管理', hint: '病历与AI意见' },
+  { key: 'learning', label: '医生学习', hint: '资料检索与阅读' },
+]
 
+const userStore = useUserStore()
+
+const activeTab = ref('chat')
+const isDialogShow = ref(false)
+
+const talkTitleList = ref([])
 const currentTalkId = ref(0)
 const currentTalkList = ref([])
+const isStreaming = ref(false)
+const chatLoading = ref(false)
+const deleteAllLoading = ref(false)
 
-const canSendMessage = ref(true)
-const loading = ref(false)
+const patientQuery = ref({ page: 1, size: 8, name: '', diseases: '' })
+const patients = ref([])
+const patientTotal = ref(0)
+const patientsLoading = ref(false)
+const selectedPatientId = ref(null)
+const patientDetail = ref(null)
+const patientDetailLoading = ref(false)
+const patientFormVisible = ref(false)
+const patientFormMode = ref('create')
+const patientSubmitting = ref(false)
+const patientAnalysisLoading = ref(false)
+const patientAnalysisText = ref('')
+const patientForm = ref({ id: null, name: '', history: '', notes: '' })
 
-marked.setOptions({
-  gfm: true,
-  breaks: true,
+const learningQuery = ref({ category: '', page: 1, size: 8 })
+const materials = ref([])
+const learningTotal = ref(0)
+const materialsLoading = ref(false)
+const selectedMaterialId = ref(null)
+const materialDetail = ref(null)
+const materialDetailLoading = ref(false)
+
+const syncPatientId = ref(null)
+const syncLoading = ref(false)
+const syncResult = ref(null)
+
+const patientsLoaded = ref(false)
+const materialsLoaded = ref(false)
+
+const overlayVisible = computed(
+  () => deleteAllLoading.value || patientSubmitting.value || patientAnalysisLoading.value || syncLoading.value,
+)
+
+const patientPageCount = computed(() => Math.max(1, Math.ceil(patientTotal.value / patientQuery.value.size) || 1))
+const materialPageCount = computed(() => Math.max(1, Math.ceil(learningTotal.value / learningQuery.value.size) || 1))
+
+const syncPatient = computed(() => {
+  if (!syncPatientId.value) return null
+
+  if (patientDetail.value?.id === syncPatientId.value) {
+    return patientDetail.value
+  }
+
+  return patients.value.find((patient) => patient.id === syncPatientId.value) || null
 })
 
-const renderMarkdown = (raw = '') => {
-  if (!raw) return ''
-  return DOMPurify.sanitize(
-    marked.parse(String(raw), {
-      breaks: true,
-      gfm: true
-    })
-  )
-}
+const conversationPayload = computed(() =>
+  currentTalkList.value
+    .map((content, index) => ({
+      role: index % 2 === 0 ? 'user' : 'assistant',
+      content: String(content || '').trim(),
+    }))
+    .filter((item) => item.content),
+)
 
-onMounted(async () => {
-  await fetchTalkTitle()
-  if (talkTitleList.value.length > 0) {
-    // 过滤掉可能存在的残留占位符
-    const validTalk = talkTitleList.value.find(t => t.talkId !== 0)
-    if (validTalk) {
-      currentTalkId.value = validTalk.talkId
-      fetchTalkHistory(currentTalkId.value)
-    }
+const canSyncConversation = computed(
+  () => !!syncPatientId.value && !!currentTalkId.value && conversationPayload.value.length >= 2 && !isStreaming.value,
+)
+
+const conversationPreview = computed(() => conversationPayload.value.slice(-4))
+
+watch(activeTab, (tab) => {
+  if (tab === 'patients' && !patientsLoaded.value) {
+    fetchPatients()
+  }
+
+  if (tab === 'learning' && !materialsLoaded.value) {
+    fetchMaterials()
   }
 })
+
+onMounted(async () => {
+  await Promise.allSettled([fetchTalkTitle(), fetchPatients()])
+})
+
+function normalizeTalkTitles(payload) {
+  const source = Array.isArray(payload) ? payload : Array.isArray(payload?.titles) ? payload.titles : []
+
+  return source
+    .map((item) => ({
+      talkId: Number(item?.talkId ?? item?.id ?? 0),
+      title: String(item?.title ?? item?.name ?? '未命名对话'),
+    }))
+    .filter((item) => !Number.isNaN(item.talkId))
+}
+
+function normalizeTalkHistory(payload) {
+  const source = Array.isArray(payload) ? payload : Array.isArray(payload?.conversation) ? payload.conversation : []
+
+  if (source.every((item) => typeof item === 'string')) {
+    return source.map((item) => String(item || ''))
+  }
+
+  return source
+    .map((item) => String(item?.content ?? item?.message ?? ''))
+    .filter((item) => item !== '')
+}
+
+function normalizeAiOpinion(aiOpinion) {
+  if (!aiOpinion) return null
+
+  if (typeof aiOpinion === 'string') {
+    return {
+      riskLevel: '',
+      suggestion: aiOpinion,
+      analysisDetails: '',
+      lastUpdatedAt: '',
+    }
+  }
+
+  return {
+    riskLevel: String(aiOpinion.riskLevel || ''),
+    suggestion: String(aiOpinion.suggestion || ''),
+    analysisDetails: String(aiOpinion.analysisDetails || ''),
+    lastUpdatedAt: String(aiOpinion.lastUpdatedAt || ''),
+  }
+}
+
+function normalizePatient(patient) {
+  const aiOpinion = normalizeAiOpinion(patient?.aiOpinion)
+
+  return {
+    id: Number(patient?.id || 0),
+    name: String(patient?.name || '未命名患者'),
+    history: String(patient?.history || ''),
+    notes: String(patient?.notes || ''),
+    aiOpinion,
+    aiSummary: aiOpinion?.suggestion || aiOpinion?.analysisDetails || '暂无AI建议',
+  }
+}
 
 async function fetchTalkTitle() {
   try {
     const res = await getChatTitlesAPI()
-    if (res.data && res.data.length > 0) {
-      talkTitleList.value = res.data
+    talkTitleList.value = normalizeTalkTitles(res.data)
+
+    if (!talkTitleList.value.length) {
+      currentTalkId.value = 0
+      currentTalkList.value = []
+      return
     }
-  } catch (e) {
-    console.error('获取标题失败', e)
+
+    const preferredTalk = talkTitleList.value.find((talk) => talk.talkId === currentTalkId.value)
+    const firstValidTalk = preferredTalk || talkTitleList.value.find((talk) => talk.talkId !== 0) || talkTitleList.value[0]
+
+    currentTalkId.value = firstValidTalk.talkId
+    await fetchTalkHistory(firstValidTalk.talkId)
+  } catch (error) {
+    console.error('获取对话标题失败', error)
   }
 }
 
-function handleClickTalkTitle(talkId) {
+async function fetchTalkHistory(talkId = currentTalkId.value) {
+  if (!talkId) {
+    currentTalkList.value = []
+    return
+  }
+
+  chatLoading.value = true
+  isDialogShow.value = false
+  try {
+    const res = await getChatHistoryAPI(talkId)
+    currentTalkList.value = normalizeTalkHistory(res.data)
+  } catch (error) {
+    console.error('获取历史对话失败', error)
+    currentTalkList.value = []
+  } finally {
+    chatLoading.value = false
+  }
+}
+
+function handleSelectTalk(talkId) {
   if (talkId === currentTalkId.value) return
   currentTalkId.value = talkId
   fetchTalkHistory(talkId)
 }
 
-async function fetchTalkHistory(talkId = currentTalkId.value) {
-  try {
-    const res = await getChatHistoryAPI(talkId)
-    // 确保是数组
-    currentTalkList.value = Array.isArray(res.data) ? res.data : []
-    nextTick(() => scrollToBottom())
-  } catch (e) {
-    console.error('获取历史失败', e)
-  }
-}
-
 function handleNewChat() {
   currentTalkId.value = 0
   currentTalkList.value = []
-
-  // 清理可能存在的旧占位
-  talkTitleList.value = talkTitleList.value.filter(t => t.talkId !== 0)
+  talkTitleList.value = talkTitleList.value.filter((talk) => talk.talkId !== 0)
   talkTitleList.value.unshift({ talkId: 0, title: '新对话' })
-
-  if (inputRef.value) inputRef.value.focus()
 }
 
-// 发送消息核心逻辑修复
-const isStreaming = ref(false)
-
-
-async function sendMessage() {
-  const text = message.value.trim()
+async function handleSendMessage(text) {
   if (!text || isStreaming.value) return
 
-  message.value = ''
   isStreaming.value = true
-  loading.value = true
-
-  // 1️⃣ 用户消息上屏
   currentTalkList.value.push(text)
-
-  // 2️⃣ AI 占位
   currentTalkList.value.push('')
   const aiIndex = currentTalkList.value.length - 1
 
-  nextTick(scrollToBottom)
-
   try {
-    let finalResult = null
-
-    if (currentTalkId.value === 0) {
-      finalResult = await newChatStreamAPI(
-        { question: text },
-        (chunk) => {
+    const finalResult =
+      currentTalkId.value === 0
+        ? await newChatStreamAPI({ question: text }, (chunk) => {
           currentTalkList.value[aiIndex] += chunk
-          nextTick(scrollToBottom)
-        }
-      )
-    } else {
-      finalResult = await sendQuestionStreamAPI(
-        {
-          talkId: currentTalkId.value,
-          question: text,
-        },
-        (chunk) => {
-          currentTalkList.value[aiIndex] += chunk
-          nextTick(scrollToBottom)
-        }
-      )
-    }
+        })
+        : await sendQuestionStreamAPI(
+          {
+            talkId: currentTalkId.value,
+            question: text,
+          },
+          (chunk) => {
+            currentTalkList.value[aiIndex] += chunk
+          },
+        )
 
     const { talkId, title, content } = finalResult.data || {}
 
@@ -144,591 +259,569 @@ async function sendMessage() {
       currentTalkList.value[aiIndex] = content
     }
 
-    // ✅ 新对话真正生成 ID 后再更新
     if (currentTalkId.value === 0 && talkId) {
       currentTalkId.value = talkId
+      const placeholderIndex = talkTitleList.value.findIndex((talk) => talk.talkId === 0)
 
-      const index = talkTitleList.value.findIndex(t => t.talkId === 0)
-
-      if (index !== -1) {
-        talkTitleList.value[index] = { talkId, title }
+      if (placeholderIndex !== -1) {
+        talkTitleList.value[placeholderIndex] = { talkId, title: title || '新对话' }
       } else {
-        talkTitleList.value.unshift({ talkId, title })
-      }
-    } else if (talkId) {
-      const index = talkTitleList.value.findIndex(t => t.talkId === talkId)
-      if (index !== -1 && title) {
-        talkTitleList.value[index] = {
-          ...talkTitleList.value[index],
-          title,
-        }
+        talkTitleList.value.unshift({ talkId, title: title || '新对话' })
       }
     }
 
     await fetchTalkTitle()
-
-  } catch (err) {
-    console.error('发送失败', err)
+  } catch (error) {
+    console.error('发送消息失败', error)
     currentTalkList.value.splice(aiIndex, 1)
     currentTalkList.value.pop()
-    alert(err?.message || '发送失败')
+    alert(error?.msg || error?.message || '发送失败，请稍后再试')
   } finally {
     isStreaming.value = false
-    loading.value = false
-    nextTick(scrollToBottom)
   }
 }
 
 async function handleDeleteChat(talkId) {
-  if (!confirm('确定要删除此对话吗？此操作不可撤销！')) return
+  if (!talkId || talkId === 0) {
+    handleNewChat()
+    return
+  }
+
+  if (!window.confirm('确定要删除此对话吗？')) return
+
   try {
     await deleteChatAPI(talkId)
-    talkTitleList.value = talkTitleList.value.filter(t => t.talkId !== talkId)
+    talkTitleList.value = talkTitleList.value.filter((talk) => talk.talkId !== talkId)
+
     if (currentTalkId.value === talkId) {
-      handleNewChat()
+      const nextTalk = talkTitleList.value.find((talk) => talk.talkId !== 0)
+      currentTalkId.value = nextTalk?.talkId || 0
+      if (nextTalk) {
+        await fetchTalkHistory(nextTalk.talkId)
+      } else {
+        handleNewChat()
+      }
     }
-  } catch (err) {
-    console.error('删除失败', err)
-    alert('删除失败')
+  } catch (error) {
+    console.error('删除对话失败', error)
+    alert(error?.msg || '删除失败')
   }
 }
 
 async function handleDeleteAll() {
-  if (!confirm('确定要删除所有对话吗？此操作不可撤销！')) return
-  if (!talkTitleList.value || talkTitleList.value.length === 0) return
+  const ids = talkTitleList.value.map((talk) => talk.talkId).filter((talkId) => talkId !== 0)
+  if (!ids.length) return
+  if (!window.confirm('确定删除所有历史对话吗？')) return
 
-  loading.value = true
+  deleteAllLoading.value = true
   try {
-    // 并行删除以提高速度，或按需串行
-    const deletePromises = talkTitleList.value
-      .filter(t => t.talkId !== 0)
-      .map(t => deleteChatAPI(t.talkId))
-
-    await Promise.all(deletePromises)
-
-    // 清空前端状态
+    await Promise.all(ids.map((talkId) => deleteChatAPI(talkId)))
     talkTitleList.value = []
-    currentTalkList.value = []
-    currentTalkId.value = 0
-
-    // 重新拉取确认
-    await fetchTalkTitle()
-    handleNewChat() // 重置为新对话状态
-  } catch (err) {
-    console.error('删除所有失败', err)
-    alert('删除失败，请重试')
+    handleNewChat()
+  } catch (error) {
+    console.error('清空对话失败', error)
+    alert(error?.msg || '删除失败，请重试')
   } finally {
-    loading.value = false
+    deleteAllLoading.value = false
   }
 }
 
-function handleUserClick() {
-  isDialogShow.value = !isDialogShow.value
-}
+async function fetchPatients() {
+  patientsLoading.value = true
 
-function handleCopy(text) {
-  if (!text) return
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => alert('复制成功')).catch(() => fallbackCopy(text))
-  } else {
-    fallbackCopy(text)
+  try {
+    const res = await getPatientsAPI({
+      page: patientQuery.value.page,
+      size: patientQuery.value.size,
+      filter: {
+        name: patientQuery.value.name.trim(),
+        diseases: patientQuery.value.diseases.trim(),
+      },
+    })
+
+    const list = Array.isArray(res.data?.patients) ? res.data.patients : []
+    patients.value = list.map(normalizePatient)
+    patientTotal.value = Number(res.data?.total || 0)
+    patientsLoaded.value = true
+
+    if (!patients.value.length) {
+      selectedPatientId.value = null
+      patientDetail.value = null
+      syncPatientId.value = null
+      return
+    }
+
+    if (!syncPatientId.value || !patients.value.some((patient) => patient.id === syncPatientId.value)) {
+      syncPatientId.value = patients.value[0].id
+    }
+
+    const preferredId =
+      selectedPatientId.value && patients.value.some((patient) => patient.id === selectedPatientId.value)
+        ? selectedPatientId.value
+        : patients.value[0].id
+
+    if (activeTab.value === 'patients' || !patientDetail.value || patientDetail.value.id !== preferredId) {
+      await handleSelectPatient(preferredId)
+    }
+  } catch (error) {
+    console.error('获取患者列表失败', error)
+    alert(error?.msg || '获取患者列表失败')
+  } finally {
+    patientsLoading.value = false
   }
 }
 
-function fallbackCopy(text) {
-  const textarea = document.createElement('textarea')
-  textarea.value = text
-  textarea.style.position = 'fixed'
-  textarea.style.opacity = '0'
-  document.body.appendChild(textarea)
-  textarea.select()
-  document.execCommand('copy')
-  alert('复制成功')
+async function handleSelectPatient(patientId) {
+  if (!patientId) return
+
+  selectedPatientId.value = patientId
+  patientDetailLoading.value = true
+
+  try {
+    const res = await getPatientDetailAPI(patientId)
+    patientDetail.value = normalizePatient(res.data)
+  } catch (error) {
+    console.error('获取患者详情失败', error)
+    alert(error?.msg || '获取患者详情失败')
+  } finally {
+    patientDetailLoading.value = false
+  }
 }
 
-const autoResize = () => {
-  const el = inputRef.value
-  if (!el) return
-  el.style.height = 'auto'
-  el.style.height = `${el.scrollHeight}px`
+function resetPatientForm() {
+  patientForm.value = { id: null, name: '', history: '', notes: '' }
 }
 
-// 新增：滚动到底部
-const scrollToBottom = () => {
-  const container = document.querySelector('.chat-messages')
-  if (container) {
-    container.scrollTop = container.scrollHeight
+function openCreatePatient() {
+  patientFormMode.value = 'create'
+  resetPatientForm()
+  patientFormVisible.value = true
+}
+
+function openEditPatient(patient) {
+  patientFormMode.value = 'edit'
+  patientForm.value = {
+    id: patient.id,
+    name: patient.name,
+    history: patient.history,
+    notes: patient.notes,
+  }
+  patientFormVisible.value = true
+}
+
+async function submitPatientForm() {
+  const payload = {
+    name: patientForm.value.name.trim(),
+    history: patientForm.value.history.trim(),
+    notes: patientForm.value.notes.trim(),
+  }
+
+  if (!payload.name) {
+    alert('患者姓名不能为空')
+    return
+  }
+
+  patientSubmitting.value = true
+
+  try {
+    if (patientFormMode.value === 'edit' && patientForm.value.id) {
+      await updatePatientAPI(patientForm.value.id, payload)
+      selectedPatientId.value = patientForm.value.id
+    } else {
+      const res = await createPatientAPI(payload)
+      selectedPatientId.value = Number(res.data?.id || selectedPatientId.value)
+    }
+
+    patientFormVisible.value = false
+    resetPatientForm()
+    await fetchPatients()
+
+    if (selectedPatientId.value) {
+      await handleSelectPatient(selectedPatientId.value)
+    }
+  } catch (error) {
+    console.error('保存患者失败', error)
+    alert(error?.msg || '保存患者失败')
+  } finally {
+    patientSubmitting.value = false
+  }
+}
+
+async function handleDeletePatient(patientId) {
+  if (!window.confirm('确定删除该患者吗？')) return
+
+  try {
+    await deletePatientAPI(patientId)
+
+    if (selectedPatientId.value === patientId) {
+      selectedPatientId.value = null
+      patientDetail.value = null
+    }
+
+    if (syncPatientId.value === patientId) {
+      syncPatientId.value = null
+    }
+
+    await fetchPatients()
+  } catch (error) {
+    console.error('删除患者失败', error)
+    alert(error?.msg || '删除患者失败')
+  }
+}
+
+async function handleAnalyzePatient() {
+  if (!selectedPatientId.value) {
+    alert('请先选择患者')
+    return
+  }
+
+  const data = patientAnalysisText.value.trim()
+  if (!data) {
+    alert('请输入需要提交给AI的补充健康数据')
+    return
+  }
+
+  patientAnalysisLoading.value = true
+
+  try {
+    const res = await analyzePatientAPI({
+      patientId: selectedPatientId.value,
+      data,
+    })
+
+    patientDetail.value = {
+      ...(patientDetail.value || {}),
+      id: selectedPatientId.value,
+      name: patientDetail.value?.name || '',
+      history: patientDetail.value?.history || '',
+      notes: patientDetail.value?.notes || '',
+      aiOpinion: normalizeAiOpinion(res.data),
+      aiSummary: res.data?.suggestion || res.data?.analysisDetails || '暂无AI建议',
+    }
+
+    patientAnalysisText.value = ''
+    await fetchPatients()
+    await handleSelectPatient(selectedPatientId.value)
+    alert('AI分析已更新')
+  } catch (error) {
+    console.error('AI分析失败', error)
+    alert(error?.msg || 'AI分析失败')
+  } finally {
+    patientAnalysisLoading.value = false
+  }
+}
+
+async function fetchMaterials() {
+  materialsLoading.value = true
+
+  try {
+    const res = await getLearningMaterialsAPI({
+      category: learningQuery.value.category.trim(),
+      page: learningQuery.value.page,
+      size: learningQuery.value.size,
+    })
+
+    materials.value = Array.isArray(res.data?.materials) ? res.data.materials : []
+    learningTotal.value = Number(res.data?.total || 0)
+    materialsLoaded.value = true
+
+    if (!materials.value.length) {
+      selectedMaterialId.value = null
+      materialDetail.value = null
+      return
+    }
+
+    const preferredId = materials.value.some((item) => item.id === selectedMaterialId.value)
+      ? selectedMaterialId.value
+      : materials.value[0].id
+
+    await handleSelectMaterial(preferredId)
+  } catch (error) {
+    console.error('获取学习资料失败', error)
+    alert(error?.msg || '获取学习资料失败')
+  } finally {
+    materialsLoading.value = false
+  }
+}
+
+async function handleSelectMaterial(materialId) {
+  if (!materialId) return
+
+  selectedMaterialId.value = materialId
+  materialDetailLoading.value = true
+
+  try {
+    const res = await getLearningMaterialDetailAPI(materialId)
+    materialDetail.value = res.data || null
+  } catch (error) {
+    console.error('获取资料详情失败', error)
+    alert(error?.msg || '获取资料详情失败')
+  } finally {
+    materialDetailLoading.value = false
+  }
+}
+
+function openMaterialLink(value) {
+  if (!value) return
+  window.open(value, '_blank', 'noopener,noreferrer')
+}
+
+async function handleSyncConversation() {
+  if (!canSyncConversation.value) {
+    alert('请先选择患者，并确保当前对话已经生成回答')
+    return
+  }
+
+  if (!window.confirm('确认将当前对话同步到患者AI分析吗？')) return
+
+  syncLoading.value = true
+
+  try {
+    const res = await syncTalkToPatientAPI({
+      patientId: syncPatientId.value,
+      talkId: currentTalkId.value,
+      conversation: conversationPayload.value,
+      mergeWithHistory: true,
+    })
+
+    syncResult.value = res.data || null
+    await fetchPatients()
+
+    if (selectedPatientId.value === syncPatientId.value || !selectedPatientId.value) {
+      selectedPatientId.value = syncPatientId.value
+      await handleSelectPatient(syncPatientId.value)
+    }
+
+    alert('同步完成，患者AI意见已更新')
+  } catch (error) {
+    console.error('同步对话失败', error)
+    alert(error?.msg || '同步失败')
+  } finally {
+    syncLoading.value = false
+  }
+}
+
+function handlePatientSearch() {
+  patientQuery.value.page = 1
+  fetchPatients()
+}
+
+function goPatientPage(delta) {
+  const nextPage = patientQuery.value.page + delta
+  if (nextPage < 1 || nextPage > patientPageCount.value) return
+  patientQuery.value.page = nextPage
+  fetchPatients()
+}
+
+function handleMaterialSearch() {
+  learningQuery.value.page = 1
+  fetchMaterials()
+}
+
+function goMaterialPage(delta) {
+  const nextPage = learningQuery.value.page + delta
+  if (nextPage < 1 || nextPage > materialPageCount.value) return
+  learningQuery.value.page = nextPage
+  fetchMaterials()
+}
+
+function openPatientWorkspace(patientId) {
+  activeTab.value = 'patients'
+  if (patientId) {
+    handleSelectPatient(patientId)
   }
 }
 </script>
 
 <template>
-  <LoadingModel v-model="loading" />
-
-  <div class="container">
-    <div class="chat-history">
-      <div class="new-chat" @click="handleNewChat">开始新对话</div>
-      <div class="history-header">
-        <h3>历史记录</h3>
-        <DeleteAllSVG size="24" color="#666" @click="handleDeleteAll" class="delete-chat" />
-      </div>
-      <div class="chat-list">
-        <div v-for="talk in talkTitleList" :key="talk.talkId" class="chat-item"
-          :class="{ active: talk.talkId === currentTalkId }" @click="handleClickTalkTitle(talk.talkId)">
-          <span class="title">{{ talk.title }}</span>
-          <button class="delete-btn" type="button" aria-label="删除对话" @click.stop="handleDeleteChat(talk.talkId)">
-            <DeleteSVG size="18" color="currentColor" />
-          </button>
-        </div>
+  <div class="workspace-shell">
+    <div v-if="overlayVisible" class="page-overlay">
+      <div class="overlay-card">
+        <div class="spinner"></div>
+        <p>正在处理，请稍候...</p>
       </div>
     </div>
 
-    <div class="chat-panel">
-      <header class="chat-header">
-        <span class="title">Synapse MD</span>
-        <div class="user" @click="handleUserClick">
-          <AppAvatar class="avatar" :src="userStore.image" :name="userStore.name" :size="32" alt="avatar" />
-          <p class="username">{{ userStore.name }}</p>
-          <UserDialog :visible="isDialogShow" @close="isDialogShow = false"></UserDialog>
+
+    <section class="tab-section section-card">
+      <WorkspaceTabs :tabs="tabs" :active-tab="activeTab" @change="activeTab = $event" />
+      <div class="user-anchor" @click="isDialogShow = !isDialogShow">
+        <AppAvatar class="avatar" :src="userStore.image" :name="userStore.name" :size="40" alt="avatar" />
+        <div>
+          <p class="user-name">{{ userStore.name || '医生' }}</p>
+          <small>已登录</small>
         </div>
-      </header>
-
-      <!-- 对话展示区：添加 ref 以便滚动 -->
-      <main class="chat-messages" ref="chatContainerRef">
-        <div class="chat-content" v-if="currentTalkList.length > 0">
-          <div v-for="(msg, index) in currentTalkList" :key="index + msg" class="message-wrapper"
-            :class="{ user: index % 2 === 0 }">
-
-            <div class="message" :class="{ user: index % 2 === 0 }">
-
-              <template v-if="index % 2 === 0">
-                {{ msg }}
-              </template>
-              <div v-else class="markdown-body" v-html="renderMarkdown(msg)"></div>
-            </div>
-
-            <button class="copy-btn" @click="handleCopy(msg)">复制</button>
-          </div>
-        </div>
-        <div v-else class="empty">我可以帮助您什么？</div>
-      </main>
-
-      <div class="input-box">
-        <textarea ref="inputRef" rows="1" placeholder="请输入您的问题" v-model="message" @input="autoResize"
-          @keydown.enter.exact.prevent="sendMessage" />
-        <button class="send-btn" :disabled="message.trim() === '' || !canSendMessage" @click="sendMessage">
-          <ArrowSVG color="#fff" size="24" />
-        </button>
+        <UserDialog :visible="isDialogShow" @close="isDialogShow = false" />
       </div>
-    </div>
+    </section>
+
+    <main class="workspace-content">
+      <ChatWorkspace v-if="activeTab === 'chat'" v-model:sync-patient-id="syncPatientId"
+        :talk-title-list="talkTitleList" :current-talk-id="currentTalkId" :current-talk-list="currentTalkList"
+        :is-streaming="isStreaming" :chat-loading="chatLoading" :patients="patients" :sync-patient="syncPatient"
+        :conversation-preview="conversationPreview" :can-sync-conversation="canSyncConversation"
+        :sync-result="syncResult" @select-talk="handleSelectTalk" @new-chat="handleNewChat"
+        @delete-chat="handleDeleteChat" @delete-all="handleDeleteAll" @send-message="handleSendMessage"
+        @sync-conversation="handleSyncConversation" @open-patient-workspace="openPatientWorkspace" />
+
+      <PatientWorkspace v-else-if="activeTab === 'patients'" v-model:query="patientQuery"
+        v-model:analysis-text="patientAnalysisText" :patients="patients" :patient-total="patientTotal"
+        :patients-loading="patientsLoading" :selected-patient-id="selectedPatientId" :patient-detail="patientDetail"
+        :patient-detail-loading="patientDetailLoading" :patient-page-count="patientPageCount"
+        @search="handlePatientSearch" @select-patient="handleSelectPatient" @open-create="openCreatePatient"
+        @open-edit="openEditPatient" @delete-patient="handleDeletePatient" @analyze-patient="handleAnalyzePatient"
+        @page-change="goPatientPage" />
+
+      <LearningWorkspace v-else v-model:query="learningQuery" :materials="materials" :learning-total="learningTotal"
+        :materials-loading="materialsLoading" :selected-material-id="selectedMaterialId"
+        :material-detail="materialDetail" :material-detail-loading="materialDetailLoading"
+        :material-page-count="materialPageCount" @search="handleMaterialSearch" @select-material="handleSelectMaterial"
+        @page-change="goMaterialPage" @open-material-link="openMaterialLink" />
+    </main>
+
+    <PatientFormDialog v-model:form="patientForm" :visible="patientFormVisible" :mode="patientFormMode"
+      @close="patientFormVisible = false" @submit="submitPatientForm" />
   </div>
 </template>
 
-
-
 <style scoped lang="scss">
-* {
-  color: #333;
+:global(body) {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(24, 190, 155, 0.18), transparent 34%),
+    radial-gradient(circle at top right, rgba(14, 116, 144, 0.16), transparent 28%),
+    linear-gradient(135deg, #eef8f6 0%, #f9fbfc 40%, #f3f7fb 100%);
 }
 
-.container {
-  width: 100vw;
-  height: 100vh;
-
+.workspace-shell {
+  min-height: 100dvh;
+  box-sizing: border-box;
+  padding: 24px;
   display: flex;
-  background-color: #f7f9fc;
+  flex-direction: column;
+  gap: 18px;
+  color: #17313a;
+}
 
-  .chat-history {
-    width: 260px;
-    background-color: #fff;
-    padding: 10px;
-    color: #333;
-    border-right: 1px solid #e5e7eb;
+.section-card {
+  border: 1px solid rgba(217, 230, 226, 0.95);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 20px 45px rgba(15, 65, 79, 0.12);
+}
 
-    .new-chat {
-      margin: 15px auto;
-      text-align: center;
-      padding: 10px;
-      transition: all 0.15s ease;
-      cursor: pointer;
-      font-size: 14px;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-    }
+.workspace-header {
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
 
-    .new-chat {
-      background-color: #07bf9b;
-      color: #fff;
-      border: none;
-    }
+.brand-block h1,
+.user-name {
+  margin: 6px 0 0;
+}
 
-    .new-chat:hover {
-      background-color: #05a583;
-    }
+.eyebrow {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #2c7c6e;
+}
 
-    .history-header {
-      margin: 32px 8px 16px 8px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+.subtitle,
+.user-anchor small,
+.overlay-card p {
+  color: #5e7379;
+}
 
-      h3 {
-        font-size: 14px;
-        margin: 0;
-        color: #666;
-      }
+.tab-section {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
 
-      .delete-chat {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        color: #666;
-        transition: color 0.15s ease;
+.workspace-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
 
-        &:hover {
-          color: #ff4d4f;
-        }
-      }
-    }
+.user-anchor {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 10px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+  transition: background 0.18s ease;
 
-    .chat-list {
-      max-height: calc(100vh - 200px);
-      overflow-y: auto;
+  &:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+}
 
-      .chat-item {
-        display: flex;
-        align-items: center; // 垂直居中
-        justify-content: space-between;
+.tab-section :deep(.workspace-tabs) {
+  flex: 0 1 auto;
+  min-width: 0;
+}
 
-        padding: 10px 12px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 14px;
-        color: #4b5563;
-        transition: all 0.15s ease;
-        margin-bottom: 8px;
+.page-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 38, 44, 0.32);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
 
-        .title {
-          flex: 1; // 占满剩余空间
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
+.overlay-card {
+  width: 220px;
+  padding: 28px 22px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 20px 45px rgba(15, 65, 79, 0.12);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
 
-        .delete-btn {
-          margin-left: 8px; // 和标题拉开一点距离
-          width: 24px;
-          height: 24px;
-          padding: 0;
-          color: #ff4d4f;
-          background-color: transparent;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          opacity: 0;
-          visibility: hidden;
-          pointer-events: none;
-          transition: all 0.15s ease;
+.spinner {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid rgba(17, 150, 127, 0.15);
+  border-top-color: #11967f;
+  animation: rotate 0.9s linear infinite;
+}
 
-          // 防止按钮点击触发父级点击（如果有）
-          flex-shrink: 0;
+@keyframes rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
-          &:hover {
-            color: #dc2626;
-            background-color: #fee2e2;
-          }
-        }
-
-        &:hover .delete-btn {
-          opacity: 1;
-          visibility: visible;
-          pointer-events: auto;
-        }
-
-        &:hover {
-          background-color: #f3f4f6;
-          color: #111827;
-        }
-
-        &.active {
-          background-color: #eff6ff;
-          color: #3b82f6;
-          font-weight: 500;
-        }
-      }
-    }
+@media (max-width: 960px) {
+  .workspace-shell {
+    padding: 18px;
   }
 
-  .chat-panel {
-    flex: 1;
-    background-color: #f7f9fc;
-    display: flex;
-    flex-direction: column;
+  .tab-section {
+    flex-wrap: wrap;
+  }
 
-    .chat-header {
-      height: 60px;
-      padding: 0 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background-color: #fff;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      z-index: 10;
-
-      .title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #3b82f6;
-      }
-
-      .user {
-        position: relative;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        cursor: pointer;
-        padding: 4px 16px;
-        border-radius: 8px;
-        transition: background-color 0.2s;
-
-        &:hover {
-          background-color: #f3f4f6;
-        }
-
-        .avatar {
-          width: 32px;
-          height: 32px;
-        }
-
-        .username {
-          font-weight: 500;
-          font-size: 14px;
-          color: #4b5563;
-        }
-      }
-    }
-
-    .chat-messages {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      overflow-y: auto;
-      padding: 20px 0;
-
-      .chat-content {
-        width: 80%;
-        max-width: 900px;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        padding-bottom: 40px;
-
-        scrollbar-width: thin;
-        scrollbar-color: #e5e7eb transparent;
-
-        &::-webkit-scrollbar {
-          width: 6px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-          background-color: #e5e7eb;
-          border-radius: 10px;
-        }
-
-        .message {
-          padding: 12px 20px;
-          align-self: flex-start;
-          border-radius: 12px;
-          background-color: #fff;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-          border: 1px solid #e5e7eb;
-          line-height: 1.6;
-          display: inline-block;
-          width: auto;
-          max-width: 85%;
-          word-break: break-word;
-          overflow-wrap: anywhere;
-          color: #374151;
-
-          .markdown-body {
-            color: #374151;
-            font-size: 15px;
-            line-height: 1.6;
-            white-space: pre-wrap;
-          }
-
-          :deep(.markdown-body pre) {
-            background-color: #f8fafc;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            overflow-x: auto;
-          }
-
-          :deep(.markdown-body code) {
-            font-family: 'Fira Code', 'Consolas', monospace;
-            background-color: #f1f5f9;
-            color: #ef4444;
-            padding: 2px 4px;
-            border-radius: 4px;
-          }
-
-          &.user {
-            background-color: #3b82f6;
-            border-radius: 12px 12px 0 12px;
-            align-self: flex-end;
-            display: inline-block;
-            width: auto;
-            max-width: 85%;
-            color: #fff;
-            border: none;
-            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
-
-            * {
-              color: #fff;
-            }
-          }
-        }
-
-        .message-wrapper {
-          display: flex;
-          flex-direction: column;
-          position: relative;
-
-          &.user {
-            align-items: flex-end;
-          }
-
-          &:hover .copy-btn {
-            opacity: 1;
-          }
-        }
-
-        .copy-btn {
-          margin-top: 4px;
-          font-size: 12px;
-          background: transparent;
-          border: none;
-          color: #9ca3af;
-          cursor: pointer;
-          opacity: 0;
-          transition: opacity 0.2s ease;
-
-          &:hover {
-            color: #3b82f6;
-          }
-        }
-      }
-
-      .empty {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 32px;
-        font-weight: 600;
-        text-shadow: 0 1px 0 #fff;
-      }
-    }
-
-    .input-box {
-      width: 80%;
-      max-width: 800px;
-      margin: 0 auto 30px auto;
-      display: flex;
-      align-items: flex-end;
-      /* 改为 flex-end，防止输入框变高时按钮悬浮在中间 */
-      padding: 8px 16px;
-      border-radius: 16px;
-      background-color: #fff;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      border: 1px solid #e5e7eb;
-      box-sizing: border-box;
-      transition: all 0.2s ease;
-
-      &:focus-within {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-      }
-
-      /* 4. 重置 textarea 样式 */
-      textarea {
-        flex: 1;
-        min-height: 44px;
-        /* 对应原 input 的高度 */
-        max-height: 200px;
-        /* 限制最大高度，超出后出现滚动条 */
-        padding: 12px 12px;
-        /* 调整内边距以匹配视觉 */
-        border: none;
-        outline: none;
-        background-color: transparent;
-        font-size: 1rem;
-        line-height: 1.5;
-        /* 行高影响高度计算 */
-        color: #1f2937;
-        resize: none;
-        /* 禁止手动拖拽调整大小 */
-        overflow-y: auto;
-        /* 超出最大高度显示滚动条 */
-        font-family: inherit;
-        /* 继承字体 */
-        box-sizing: border-box;
-
-        &::placeholder {
-          color: #9ca3af;
-        }
-
-        /* 隐藏滚动条但保留功能 (可选，为了美观) */
-        &::-webkit-scrollbar {
-          width: 4px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-          background-color: #e5e7eb;
-          border-radius: 4px;
-        }
-      }
-
-      .send-btn {
-        width: 36px;
-        height: 36px;
-        margin-left: 12px;
-        /* 调整 margin-bottom 以对齐底部，因为父级改为了 flex-end */
-        margin-bottom: 4px;
-        border-radius: 10px;
-        border: none;
-        background-color: #3b82f6;
-        color: #fff;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        transition: all 0.2s ease;
-
-        &:hover:not(:disabled) {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
-        }
-
-        &:active:not(:disabled) {
-          transform: translateY(0);
-        }
-
-        &:disabled {
-          background-color: #f3f4f6;
-          cursor: not-allowed;
-
-          :deep(svg) {
-            color: #d1d5db !important;
-          }
-        }
-      }
-    }
+  .user-anchor {
+    margin-left: 0;
   }
 }
 </style>

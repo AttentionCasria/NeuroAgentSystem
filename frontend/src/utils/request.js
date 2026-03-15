@@ -21,6 +21,7 @@ request.interceptors.request.use(
     const userStore = useUserStore()
     const token = userStore.token
     if (userStore.hasToken) {
+      config.headers.Authorization = token
       config.headers.token = token
     }
 
@@ -55,6 +56,10 @@ request.interceptors.response.use(
       const userStore = useUserStore()
       userStore.reset()
       router.push('/login')
+    }
+
+    if (error.response?.data) {
+      return Promise.reject(error.response.data)
     }
 
     return Promise.reject(error)

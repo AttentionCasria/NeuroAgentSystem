@@ -25,6 +25,7 @@ function streamRequest(params, onChunk) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: token,
         token,
       },
       body: JSON.stringify(params),
