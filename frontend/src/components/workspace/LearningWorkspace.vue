@@ -168,11 +168,11 @@ function shortText(value, fallback = '暂无内容') {
   flex-shrink: 0;
 
   &:hover {
-    background: rgba(17, 150, 127, 0.05);
+    background: var(--color-patient-select-hover);
   }
 
   &.active {
-    background: rgba(17, 150, 127, 0.09);
+    background: var(--color-patient-select-active);
     border-left: 3px solid var(--color-active-border);
     padding-left: 11px;
   }
@@ -199,14 +199,14 @@ function shortText(value, fallback = '暂无内容') {
   border-radius: var(--radius-pill);
   font-size: 12px;
   font-weight: 700;
-  background: rgba(245, 158, 11, 0.12);
+  background: var(--color-badge-accent-bg);
   color: var(--color-orange);
   white-space: nowrap;
 }
 
 /* ───────────────── Material detail ───────────────── */
 .detail-card.accent {
-  background: rgba(17, 150, 127, 0.03);
+  background: var(--color-detail-accent-bg);
   border-top: 3px solid var(--color-primary);
   border-left: none;
 }

@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { registerAPI, loginAPI } from '@/api/user'
 import { useUserStore } from '@/stores/user'
 
-const form$ = ref(null)
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -14,10 +13,29 @@ const registerFormData = ref({
   password_confirmation: '',
 })
 
+const errorMessage = ref('')
+
 async function handleRegister() {
-  // 表单校验
-  await form$.value.validate()
-  if (form$.value.invalid) {
+  errorMessage.value = ''
+
+  if (!registerFormData.value.name) {
+    errorMessage.value = '用户名不能为空'
+    return
+  }
+  if (registerFormData.value.name.length < 3) {
+    errorMessage.value = '用户名至少为3个字符'
+    return
+  }
+  if (!registerFormData.value.password) {
+    errorMessage.value = '密码不能为空'
+    return
+  }
+  if (registerFormData.value.password.length < 6) {
+    errorMessage.value = '密码至少为6个字符'
+    return
+  }
+  if (registerFormData.value.password !== registerFormData.value.password_confirmation) {
+    errorMessage.value = '两次输入的密码不一致'
     return
   }
 
@@ -34,75 +52,71 @@ async function handleRegister() {
 
     // 注册后直接登录
     try {
-      const res = await loginAPI({
+      const loginRes = await loginAPI({
         name: registerFormData.value.name,
         password: registerFormData.value.password,
       })
-      if (res.code === 1) {
-        userStore.name = res.data.name
-        userStore.image = res.data.image
-        userStore.token = res.data.token
+      if (loginRes.code === 1) {
+        userStore.name = loginRes.data.name
+        userStore.image = loginRes.data.image
+        userStore.token = loginRes.data.token
 
         // 跳转到对话
         router.replace('/')
       }
     } catch (err) {
       if (err?.code === 0) {
-        alert('密码错误')
+        errorMessage.value = '密码错误'
       } else {
-        alert(err?.msg || '登录失败，请稍后再试')
+        errorMessage.value = err?.msg || '登录失败，请稍后再试'
       }
     }
   } catch (err) {
-    alert(err?.msg || '注册失败，请稍后再试')
+    errorMessage.value = err?.msg || '注册失败，请稍后再试'
     return
   }
 }
 </script>
 
 <template>
-  <Vueform validate-on="change" :display-errors="false" size="lg" v-model="registerFormData" ref="form$">
-    <StaticElement name="head" :loading="true">
-      <h2>注册</h2>
-    </StaticElement>
+  <div class="auth-form">
+    <h2>注册</h2>
 
-    <TextElement name="name" size="lg" placeholder="请输入用户名" rules="required|min:3|max:20" :debounce="300" :messages="{
-      required: '用户名不能为空',
-      min: '用户名至少为3个字符',
-      max: '用户名至多为20个字符',
-    }">
-      <template #addon-before>
-        <UserSVG size="20" color="#64748b"></UserSVG>
-      </template>
-    </TextElement>
+    <div class="auth-input-group">
+      <div class="auth-input-wrapper">
+        <span class="icon">
+          <UserSVG size="20" color="var(--color-text-medium)"></UserSVG>
+        </span>
+        <input v-model="registerFormData.name" class="auth-input" type="text" placeholder="请输入用户名"
+          @keyup.enter="handleRegister" />
+        <span class="auth-input-highlight"></span>
+      </div>
+    </div>
 
-    <TextElement name="password" input-type="password" placeholder="请输入密码" rules="required|min:6|confirmed"
-      :debounce="300" :messages="{
-        required: '密码不能为空',
-        min: '密码至少为6个字符',
-        confirmed: '两次密码不一致',
-      }">
-      <template #addon-before>
-        <PasswordSVG size="24" color="#64748b"></PasswordSVG>
-      </template>
-    </TextElement>
+    <div class="auth-input-group">
+      <div class="auth-input-wrapper">
+        <span class="icon">
+          <PasswordSVG size="20" color="var(--color-text-medium)"></PasswordSVG>
+        </span>
+        <input v-model="registerFormData.password" class="auth-input" type="password" placeholder="请输入密码"
+          @keyup.enter="handleRegister" />
+        <span class="auth-input-highlight"></span>
+      </div>
+    </div>
 
-    <TextElement name="password_confirmation" input-type="password" placeholder="请再次确认密码" rules="required"
-      :debounce="300" :messages="{
-        required: '确认密码不能为空',
-      }">
-      <template #addon-before>
-        <PasswordSVG size="24" color="#64748b"></PasswordSVG>
-      </template>
-    </TextElement>
+    <div class="auth-input-group">
+      <div class="auth-input-wrapper">
+        <span class="icon">
+          <PasswordSVG size="20" color="var(--color-text-medium)"></PasswordSVG>
+        </span>
+        <input v-model="registerFormData.password_confirmation" class="auth-input" type="password" placeholder="请再次确认密码"
+          @keyup.enter="handleRegister" />
+        <span class="auth-input-highlight"></span>
+      </div>
+    </div>
 
-    <ButtonElement name="submit" @click="handleRegister" full> 注册 </ButtonElement>
-  </Vueform>
+    <div v-if="errorMessage" class="auth-error">{{ errorMessage }}</div>
+
+    <button class="primary-action auth-submit-btn" @click="handleRegister">注册</button>
+  </div>
 </template>
-
-<style scoped lang="scss">
-h2 {
-  color: var(--color-text-strong);
-  margin-bottom: 1.5rem;
-}
-</style>

@@ -236,10 +236,8 @@ function typing(text, delay = TYPE_DELAY) {
   padding: 2rem;
   border-radius: var(--radius-xl);
   border: 1px solid rgba(17, 150, 127, 0.2);
-  background: linear-gradient(140deg, #ffffff, var(--color-bg-light));
-  box-shadow:
-    0 16px 40px rgba(15, 23, 42, 0.1),
-    0 1px 0 rgba(255, 255, 255, 0.8) inset;
+  background: var(--color-card-intro-bg);
+  box-shadow: var(--color-card-intro-shadow);
   will-change: transform, opacity;
   transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 

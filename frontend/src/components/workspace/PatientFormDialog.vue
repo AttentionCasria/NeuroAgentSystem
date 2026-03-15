@@ -56,7 +56,7 @@ const emit = defineEmits(['close', 'submit'])
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: rgba(236, 245, 243, 0.82);
+  background: var(--color-secondary-bg);
 }
 
 .primary-action,
@@ -76,8 +76,8 @@ const emit = defineEmits(['close', 'submit'])
 .field-label textarea {
   border-radius: var(--radius-lg);
   padding: 12px 14px;
-  border-color: rgba(191, 213, 207, 0.95);
-  background: rgba(249, 252, 252, 0.96);
+  border-color: var(--color-border);
+  background: var(--color-bg-input);
 }
 
 .field-label {

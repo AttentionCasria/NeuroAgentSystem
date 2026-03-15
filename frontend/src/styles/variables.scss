@@ -32,6 +32,44 @@
   --color-active-bg: rgba(17, 150, 127, 0.1);
   --color-active-border: #11967f;
 
+  // ── 消息气泡 ──
+  --color-message-bg: #f5faf9;
+  --color-message-user-bg: rgba(17, 150, 127, 0.08);
+  --color-message-user-border: rgba(17, 150, 127, 0.18);
+
+  // ── 组件色 ──
+  --color-secondary-bg: rgba(209, 228, 223, 0.7);
+  --color-ghost-hover: rgba(0, 0, 0, 0.07);
+  --color-badge-status-bg: rgba(148, 163, 184, 0.14);
+  --color-badge-status-color: #475569;
+  --color-badge-accent-bg: rgba(245, 158, 11, 0.12);
+  --color-code-bg: #0f172a;
+  --color-dialog-bg: rgba(255, 255, 255, 0.96);
+  --color-dialog-border: rgba(217, 230, 226, 0.95);
+  --color-overlay-bg: rgba(17, 31, 37, 0.34);
+  --color-auth-panel-bg: rgba(255, 255, 255, 0.88);
+  --color-auth-panel-border: rgba(209, 228, 223, 0.9);
+  --color-auth-panel-shadow: 0 22px 50px rgba(15, 65, 79, 0.12);
+  --color-auth-input-bg: #ffffff;
+  --color-auth-input-hover-border: #b6d4cc;
+  --color-auth-input-focus-ring: rgba(17, 150, 127, 0.16);
+  --color-auth-placeholder: #8ca39d;
+  --color-menu-border: #e5e7eb;
+  --color-menu-item: #334155;
+  --color-menu-item-hover-bg: #f1f5f9;
+  --color-menu-item-hover: #0f172a;
+  --color-menu-danger-hover-bg: #fef2f2;
+  --color-plain-btn-bg: #f1f5f9;
+  --color-plain-btn: #334155;
+  --color-plain-btn-hover-bg: #e2e8f0;
+  --color-card-intro-bg: linear-gradient(140deg, #ffffff, var(--color-bg-light));
+  --color-card-intro-shadow: 0 16px 40px rgba(15, 23, 42, 0.1), 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+  --color-avatar-border: #eff6ff;
+  --color-detail-accent-bg: rgba(17, 150, 127, 0.04);
+  --color-patient-select-hover: rgba(17, 150, 127, 0.05);
+  --color-patient-select-active: rgba(17, 150, 127, 0.09);
+  --color-form-icon: #64748b;
+
   // ── 圆角 ──
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -49,4 +87,70 @@
   --transition-fast: 0.15s ease;
   --transition-normal: 0.18s ease;
   --transition-slow: 0.22s ease;
+}
+
+// ─────────────────── 深色模式 ───────────────────
+[data-theme='dark'] {
+  // ── 文本色 ──
+  --color-text-strong: #e2e8f0;
+  --color-text-medium: #94a3b8;
+  --color-text-weak: #64748b;
+  --color-text-label: #5eead4;
+
+  // ── 背景色 ──
+  --color-bg-base: #0f172a;
+  --color-bg-light: #1e293b;
+  --color-bg-input: #1e293b;
+
+  // ── 边框色 ──
+  --color-border: #334155;
+  --color-border-light: #1e293b;
+  --color-border-item: #1e293b;
+
+  // ── 列表交互 ──
+  --color-hover-bg: rgba(17, 150, 127, 0.12);
+  --color-active-bg: rgba(17, 150, 127, 0.18);
+
+  // ── 消息气泡 ──
+  --color-message-bg: #1e293b;
+  --color-message-user-bg: rgba(17, 150, 127, 0.15);
+  --color-message-user-border: rgba(17, 150, 127, 0.3);
+
+  // ── 组件色 ──
+  --color-secondary-bg: rgba(51, 65, 85, 0.7);
+  --color-ghost-hover: rgba(255, 255, 255, 0.08);
+  --color-badge-status-bg: rgba(148, 163, 184, 0.18);
+  --color-badge-status-color: #94a3b8;
+  --color-badge-accent-bg: rgba(245, 158, 11, 0.18);
+  --color-code-bg: #020617;
+  --color-dialog-bg: rgba(30, 41, 59, 0.98);
+  --color-dialog-border: rgba(51, 65, 85, 0.95);
+  --color-overlay-bg: rgba(0, 0, 0, 0.6);
+  --color-auth-panel-bg: rgba(15, 23, 42, 0.78);
+  --color-auth-panel-border: rgba(71, 85, 105, 0.72);
+  --color-auth-panel-shadow: 0 24px 50px rgba(0, 0, 0, 0.38);
+  --color-auth-input-bg: rgba(15, 23, 42, 0.78);
+  --color-auth-input-hover-border: #5b7088;
+  --color-auth-input-focus-ring: rgba(45, 212, 191, 0.22);
+  --color-auth-placeholder: #7b8ca4;
+  --color-menu-border: #334155;
+  --color-menu-item: #cbd5e1;
+  --color-menu-item-hover-bg: #334155;
+  --color-menu-item-hover: #f1f5f9;
+  --color-menu-danger-hover-bg: rgba(220, 38, 38, 0.15);
+  --color-plain-btn-bg: #334155;
+  --color-plain-btn: #cbd5e1;
+  --color-plain-btn-hover-bg: #475569;
+  --color-card-intro-bg: linear-gradient(140deg, #1e293b, #0f172a);
+  --color-card-intro-shadow: 0 16px 40px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
+  --color-avatar-border: #334155;
+  --color-detail-accent-bg: rgba(17, 150, 127, 0.1);
+  --color-patient-select-hover: rgba(17, 150, 127, 0.1);
+  --color-patient-select-active: rgba(17, 150, 127, 0.18);
+  --color-form-icon: #94a3b8;
+
+  // ── 阴影 ──
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-menu: 0 10px 20px rgba(0, 0, 0, 0.35);
+  --shadow-dialog: 0 20px 45px rgba(0, 0, 0, 0.35);
 }

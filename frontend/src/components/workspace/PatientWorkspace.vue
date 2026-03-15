@@ -249,11 +249,11 @@ function formatDateTime(value) {
   flex-shrink: 0;
 
   &:hover {
-    background: rgba(17, 150, 127, 0.05);
+    background: var(--color-patient-select-hover);
   }
 
   &.active {
-    background: rgba(17, 150, 127, 0.09);
+    background: var(--color-patient-select-active);
     border-left: 3px solid var(--color-active-border);
     padding-left: 11px;
   }
@@ -295,7 +295,7 @@ function formatDateTime(value) {
   border-radius: var(--radius-pill);
   font-size: 11px;
   font-weight: 700;
-  background: rgba(245, 158, 11, 0.12);
+  background: var(--color-badge-accent-bg);
   color: var(--color-orange);
   white-space: nowrap;
 }
@@ -310,7 +310,7 @@ function formatDateTime(value) {
   margin: 0 0 5px;
   font-size: 12px;
   font-weight: 700;
-  color: #3a5a62;
+  color: var(--color-text-label);
 }
 
 .detail-card p,

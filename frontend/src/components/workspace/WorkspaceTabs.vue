@@ -50,7 +50,7 @@ const emit = defineEmits(['change'])
 
   &:hover {
     color: var(--color-text-strong);
-    background: rgba(0, 0, 0, 0.03);
+    background: var(--color-ghost-hover);
   }
 
   &.active {

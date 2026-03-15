@@ -86,7 +86,7 @@ const handleImageError = () => {
   justify-content: center;
   overflow: hidden;
   border-radius: 50%;
-  border: 2px solid #eff6ff;
+  border: 2px solid var(--color-avatar-border);
   background: linear-gradient(135deg, var(--color-primary), #14b8a6);
   color: #fff;
   user-select: none;

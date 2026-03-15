@@ -14,7 +14,6 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
-    "@vueform/vueform": "^1.13.2",
     "axios": "^1.12.2",
     "dompurify": "^3.3.0",
     "marked": "^17.0.1",

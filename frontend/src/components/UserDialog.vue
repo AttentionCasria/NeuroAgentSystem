@@ -194,7 +194,7 @@ const handleChangeAvatar = async () => {
   width: 160px;
   background: var(--color-bg-base);
   border-radius: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-menu-border);
   box-shadow: var(--shadow-menu);
   padding: 6px;
   z-index: 40;
@@ -206,8 +206,8 @@ const handleChangeAvatar = async () => {
     right: 18px;
     width: 10px;
     height: 10px;
-    border-top: 1px solid #e5e7eb;
-    border-left: 1px solid #e5e7eb;
+    border-top: 1px solid var(--color-menu-border);
+    border-left: 1px solid var(--color-menu-border);
     background: var(--color-bg-base);
     transform: rotate(45deg);
   }
@@ -221,19 +221,19 @@ const handleChangeAvatar = async () => {
     border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 14px;
-    color: #334155;
+    color: var(--color-menu-item);
     transition: all var(--transition-fast);
 
     &:hover {
-      background: #f1f5f9;
-      color: #0f172a;
+      background: var(--color-menu-item-hover-bg);
+      color: var(--color-menu-item-hover);
     }
 
     &.danger {
       color: var(--color-red);
 
       &:hover {
-        background: #fef2f2;
+        background: var(--color-menu-danger-hover-bg);
       }
     }
   }
@@ -241,22 +241,23 @@ const handleChangeAvatar = async () => {
 
 .dialog-overlay {
   z-index: 90;
-  background: rgba(15, 23, 42, 0.45);
+  background: var(--color-overlay-bg);
 }
 
 .dialog-card {
   width: min(92vw, 420px);
   border-radius: var(--radius-lg);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.24);
-  border: 1px solid #e2e8f0;
+  box-shadow: var(--shadow-dialog);
+  border: 1px solid var(--color-menu-border);
   overflow: hidden;
+  background: var(--color-dialog-bg);
 
   .dialog-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 16px 18px;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--color-menu-border);
 
     h3 {
       margin: 0;
@@ -273,7 +274,7 @@ const handleChangeAvatar = async () => {
       cursor: pointer;
 
       &:hover {
-        color: #334155;
+        color: var(--color-menu-item-hover);
       }
     }
   }
@@ -288,7 +289,7 @@ const handleChangeAvatar = async () => {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      color: #334155;
+      color: var(--color-menu-item);
       font-size: 14px;
     }
 
@@ -299,6 +300,7 @@ const handleChangeAvatar = async () => {
       padding: 0 12px;
       font-size: 14px;
       color: var(--color-text-strong);
+      background: var(--color-bg-input);
 
       &:focus {
         outline: none;
@@ -328,11 +330,11 @@ const handleChangeAvatar = async () => {
     }
 
     .plain-btn {
-      background: #f1f5f9;
-      color: #334155;
+      background: var(--color-plain-btn-bg);
+      color: var(--color-plain-btn);
 
       &:hover {
-        background: #e2e8f0;
+        background: var(--color-plain-btn-hover-bg);
       }
     }
 

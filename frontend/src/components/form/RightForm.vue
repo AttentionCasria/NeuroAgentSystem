@@ -38,7 +38,8 @@ const isLogin = ref(true)
 }
 
 .content {
-  width: 70%;
+  width: min(100%, 420px);
+  padding: 0;
 }
 
 .switch-text {
@@ -46,9 +47,24 @@ const isLogin = ref(true)
   text-align: center;
   color: var(--color-primary);
   cursor: pointer;
+  font-size: 14px;
+  transition: color var(--transition-fast);
 
   &:hover {
     text-decoration: underline;
+    color: var(--color-primary-light);
+  }
+}
+
+@media (max-width: 960px) {
+  .content {
+    width: min(100%, 460px);
+  }
+}
+
+@media (max-width: 640px) {
+  .content {
+    width: 100%;
   }
 }
 </style>

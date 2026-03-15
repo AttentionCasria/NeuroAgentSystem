@@ -30,7 +30,7 @@
   border-radius: 7px;
   font-weight: 600;
   font-size: 13px;
-  background: rgba(209, 228, 223, 0.7);
+  background: var(--color-secondary-bg);
   color: var(--color-text-strong);
   cursor: pointer;
   transition: all var(--transition-normal);
@@ -51,7 +51,7 @@
   flex-shrink: 0;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.07);
+    background: var(--color-ghost-hover);
   }
 
   &.danger:hover {
@@ -72,6 +72,114 @@
 
 .danger-text {
   color: var(--color-red);
+}
+
+// ─────────────────── 认证表单 ───────────────────
+.auth-form {
+  width: 100%;
+
+  h2 {
+    margin: 0 0 1.5rem;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-text-strong);
+    letter-spacing: -0.02em;
+  }
+}
+
+.auth-input-group {
+  margin-bottom: 1rem;
+}
+
+.auth-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .icon {
+    position: absolute;
+    left: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-form-icon);
+    pointer-events: none;
+    transition: color var(--transition-fast);
+  }
+
+  .auth-input {
+    width: 100%;
+    height: 50px;
+    padding: 0 16px 0 52px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-auth-input-bg);
+    color: var(--color-text-strong);
+    font: inherit;
+    font-size: 15px;
+    box-sizing: border-box;
+    transition:
+      border-color var(--transition-fast),
+      box-shadow var(--transition-fast),
+      background-color var(--transition-fast),
+      color var(--transition-fast);
+
+    &::placeholder {
+      color: var(--color-auth-placeholder);
+    }
+
+    &:hover {
+      border-color: var(--color-auth-input-hover-border);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 4px var(--color-auth-input-focus-ring);
+    }
+
+    &:focus + .auth-input-highlight,
+    &:hover + .auth-input-highlight {
+      opacity: 1;
+    }
+  }
+
+  .auth-input-highlight {
+    position: absolute;
+    inset: 1px;
+    border-radius: 13px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 45%);
+    opacity: 0.55;
+    pointer-events: none;
+    transition: opacity var(--transition-fast);
+  }
+
+  &:focus-within .icon {
+    color: var(--color-primary);
+  }
+}
+
+.auth-error {
+  margin: -0.2rem 0 1rem;
+  color: var(--color-red);
+  font-size: 13px;
+}
+
+.auth-submit-btn {
+  width: 100%;
+  height: 48px;
+  margin-top: 0.5rem;
+  font-size: 16px;
+  border-radius: 12px;
+}
+
+input.auth-input:-webkit-autofill,
+input.auth-input:-webkit-autofill:hover,
+input.auth-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-text-strong);
+  -webkit-box-shadow: 0 0 0 1000px var(--color-auth-input-bg) inset;
+  transition: background-color 9999s ease-out 0s;
+  caret-color: var(--color-text-strong);
 }
 
 // ─────────────────── 区域头部 ───────────────────
@@ -207,8 +315,8 @@
   white-space: nowrap;
 
   &.badge-status {
-    background: rgba(148, 163, 184, 0.14);
-    color: #475569;
+    background: var(--color-badge-status-bg);
+    color: var(--color-badge-status-color);
 
     &.live {
       background: rgba(17, 150, 127, 0.14);
@@ -217,12 +325,12 @@
   }
 
   &.badge-risk {
-    background: rgba(245, 158, 11, 0.12);
+    background: var(--color-badge-accent-bg);
     color: var(--color-orange);
   }
 
   &.badge-type {
-    background: rgba(245, 158, 11, 0.12);
+    background: var(--color-badge-accent-bg);
     color: var(--color-orange);
   }
 }
@@ -267,7 +375,7 @@
 .dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(17, 31, 37, 0.34);
+  background: var(--color-overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -280,8 +388,8 @@
   max-height: min(84vh, 900px);
   overflow: auto;
   border-radius: var(--radius-dialog);
-  border: 1px solid rgba(217, 230, 226, 0.95);
-  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--color-dialog-border);
+  background: var(--color-dialog-bg);
   box-shadow: var(--shadow-dialog);
   padding: 22px;
 }
@@ -305,7 +413,7 @@
   border-bottom: 1px solid var(--color-border-light);
 
   &.accent {
-    background: rgba(17, 150, 127, 0.04);
+    background: var(--color-detail-accent-bg);
     border-left: 3px solid var(--color-primary);
     padding-left: 17px;
   }

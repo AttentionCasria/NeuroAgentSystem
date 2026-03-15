@@ -5,10 +5,6 @@ import piniaPersistedstate from 'pinia-plugin-persistedstate'
 import App from './App.vue'
 import router from './router'
 
-// VueForm组件库
-import Vueform from '@vueform/vueform'
-import vueformConfig from './../vueform.config'
-
 // 全局注册图标组件
 import UserSVG from './components/svg/UserSVG.vue'
 import PasswordSVG from './components/svg/PasswordSVG.vue'
@@ -23,7 +19,11 @@ pinia.use(piniaPersistedstate)
 
 app.use(pinia)
 app.use(router)
-app.use(Vueform, vueformConfig)
+
+// 初始化主题
+import { useThemeStore } from './stores/theme'
+const themeStore = useThemeStore()
+themeStore.applyTheme()
 
 app.component('UserSVG', UserSVG)
 app.component('PasswordSVG', PasswordSVG)

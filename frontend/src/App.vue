@@ -7,7 +7,6 @@
 </template>
 
 <style lang="scss">
-@use './../node_modules/@vueform/vueform/dist/vueform.css';
 @use '@/styles/variables.scss';
 @use '@/styles/common.scss';
 @use '@/styles/transitions.scss';
@@ -24,5 +23,10 @@
     sans-serif,
     Segoe UI Emoji,
     Segoe UI Symbol;
+}
+
+html,
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 </style>

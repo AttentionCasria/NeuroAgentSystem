@@ -8,6 +8,7 @@ import PatientFormDialog from '@/components/workspace/PatientFormDialog.vue'
 import PatientWorkspace from '@/components/workspace/PatientWorkspace.vue'
 import WorkspaceTabs from '@/components/workspace/WorkspaceTabs.vue'
 import { useUserStore } from '@/stores/user'
+import { useThemeStore } from '@/stores/theme'
 import {
   deleteChatAPI,
   getChatHistoryAPI,
@@ -34,6 +35,7 @@ const tabs = [
 ]
 
 const userStore = useUserStore()
+const themeStore = useThemeStore()
 
 const activeTab = ref('chat')
 const isDialogShow = ref(false)
@@ -645,10 +647,31 @@ function openPatientWorkspace(patientId) {
 
     <section class="tab-section">
       <WorkspaceTabs :tabs="tabs" :active-tab="activeTab" @change="activeTab = $event" />
-      <div class="user-anchor" @click="isDialogShow = !isDialogShow">
-        <AppAvatar class="avatar" :src="userStore.image" :name="userStore.name" :size="24" alt="avatar" />
-        <p class="user-name">{{ userStore.name || '医生' }}</p>
-        <UserDialog :visible="isDialogShow" @close="isDialogShow = false" />
+      <div class="header-right">
+        <button type="button" class="theme-toggle" :title="themeStore.dark ? '切换到浅色模式' : '切换到深色模式'"
+          @click="themeStore.toggle()">
+          <svg v-if="themeStore.dark" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="1" x2="12" y2="3" />
+            <line x1="12" y1="21" x2="12" y2="23" />
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="1" y1="12" x2="3" y2="12" />
+            <line x1="21" y1="12" x2="23" y2="12" />
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
+        <div class="user-anchor" @click="isDialogShow = !isDialogShow">
+          <AppAvatar class="avatar" :src="userStore.image" :name="userStore.name" :size="24" alt="avatar" />
+          <p class="user-name">{{ userStore.name || '医生' }}</p>
+          <UserDialog :visible="isDialogShow" @close="isDialogShow = false" />
+        </div>
       </div>
     </section>
 
@@ -727,7 +750,7 @@ function openPatientWorkspace(patientId) {
   transition: background var(--transition-normal);
 
   &:hover {
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--color-ghost-hover);
   }
 }
 
@@ -735,6 +758,32 @@ function openPatientWorkspace(patientId) {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-medium);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+
+  &:hover {
+    background: var(--color-ghost-hover);
+    color: var(--color-text-strong);
+  }
 }
 
 .user-anchor small {
@@ -745,7 +794,7 @@ function openPatientWorkspace(patientId) {
 .page-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(16, 38, 44, 0.32);
+  background: var(--color-overlay-bg);
   display: flex;
   align-items: center;
   justify-content: center;

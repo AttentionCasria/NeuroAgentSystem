@@ -279,7 +279,7 @@ function shortText(value, fallback = '暂无内容') {
           @keydown.enter.exact.prevent="handleSendMessage" />
         <button type="button" class="send-btn" :disabled="!draftMessage.trim() || isStreaming"
           @click="handleSendMessage">
-          <SendSVG size="24" />
+          <SendSVG size="24" color="currentColor" />
         </button>
       </div>
     </div>
@@ -519,8 +519,8 @@ function shortText(value, fallback = '暂无内容') {
   border-radius: var(--radius-pill);
   font-size: 12px;
   font-weight: 700;
-  background: rgba(148, 163, 184, 0.14);
-  color: #475569;
+  background: var(--color-badge-status-bg);
+  color: var(--color-badge-status-color);
 
   &.live {
     background: rgba(17, 150, 127, 0.14);
@@ -564,7 +564,7 @@ function shortText(value, fallback = '暂无内容') {
 .message {
   max-width: min(86%, 860px);
   padding: 12px 15px;
-  background: #f5faf9;
+  background: var(--color-message-bg);
   border: 1px solid var(--color-border-light);
   border-radius: 2px 12px 12px 12px;
   line-height: 1.72;
@@ -572,8 +572,8 @@ function shortText(value, fallback = '暂无内容') {
   font-size: 15px;
 
   &.user {
-    background: rgba(17, 150, 127, 0.08);
-    border-color: rgba(17, 150, 127, 0.18);
+    background: var(--color-message-user-bg);
+    border-color: var(--color-message-user-border);
     border-radius: 12px 2px 12px 12px;
   }
 }
@@ -607,7 +607,7 @@ function shortText(value, fallback = '暂无内容') {
 .send-btn {
   width: 48px;
   height: 48px;
-  color: #fff;
+  color: var(--color-primary);
 }
 
 /* ─────────────────── Sync panel internals ─────────────────── */
@@ -706,7 +706,7 @@ function shortText(value, fallback = '暂无内容') {
   overflow-x: auto;
   border-radius: var(--radius-md);
   padding: 10px 12px;
-  background: #0f172a;
+  background: var(--color-code-bg);
 }
 
 /* ─────────────────── Responsive ─────────────────── */
@@ -750,9 +750,9 @@ function shortText(value, fallback = '暂无内容') {
     border: none;
     border-top: 1px solid var(--color-border);
     border-radius: 0;
-    background: rgba(248, 251, 250, 0.98);
+    background: var(--color-bg-light);
     backdrop-filter: blur(12px);
-    box-shadow: 0 -4px 24px rgba(15, 65, 79, 0.12);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
     max-height: min(72dvh, 560px);
     overflow: hidden;
     transform: translateY(calc(100% - 68px));
@@ -812,7 +812,7 @@ function shortText(value, fallback = '暂无内容') {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(16, 38, 44, 0.24);
+    background: var(--color-overlay-bg);
     z-index: 30;
   }
 

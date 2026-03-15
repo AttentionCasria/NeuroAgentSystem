@@ -4,7 +4,6 @@ import { loginAPI } from '@/api/user'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
 
-const form$ = ref(null)
 const userStore = useUserStore()
 const router = useRouter()
 
@@ -13,64 +12,76 @@ const loginFormData = ref({
   password: '',
 })
 
-async function handleLogin() {
-  await form$.value.validate()
-  // 校验通过
-  if (!form$.value.invalid) {
-    try {
-      const res = await loginAPI(loginFormData.value)
-      if (res.code === 1) {
-        userStore.name = res.data.name
-        userStore.image = res.data.image
-        userStore.token = res.data.token
+const errorMessage = ref('')
 
-        // 跳转到对话
-        router.replace('/')
-      }
-    } catch (err) {
-      if (err?.code === 0) {
-        alert('密码错误')
-      } else {
-        alert(err?.msg || '登录失败，请稍后再试')
-      }
+async function handleLogin() {
+  errorMessage.value = ''
+
+  if (!loginFormData.value.name) {
+    errorMessage.value = '用户名不能为空'
+    return
+  }
+  if (loginFormData.value.name.length < 3) {
+    errorMessage.value = '用户名至少为3个字符'
+    return
+  }
+  if (!loginFormData.value.password) {
+    errorMessage.value = '密码不能为空'
+    return
+  }
+  if (loginFormData.value.password.length < 6) {
+    errorMessage.value = '密码至少为6个字符'
+    return
+  }
+
+  try {
+    const res = await loginAPI(loginFormData.value)
+    if (res.code === 1) {
+      userStore.name = res.data.name
+      userStore.image = res.data.image
+      userStore.token = res.data.token
+
+      // 跳转到对话
+      router.replace('/')
+    }
+  } catch (err) {
+    if (err?.code === 0) {
+      errorMessage.value = '密码错误'
+    } else {
+      errorMessage.value = err?.msg || '登录失败，请稍后再试'
     }
   }
 }
 </script>
 
 <template>
-  <Vueform validate-on="change" :display-errors="false" size="lg" v-model="loginFormData" ref="form$">
-    <StaticElement name="head">
-      <h2>登录</h2>
-    </StaticElement>
+  <div class="auth-form">
+    <h2>登录</h2>
 
-    <TextElement name="name" size="lg" placeholder="请输入用户名" rules="required|min:3|max:20" :debounce="300" :messages="{
-      required: '用户名不能为空',
-      min: '用户名至少为3个字符',
-      max: '用户名至多为20个字符',
-    }">
-      <template #addon-before>
-        <UserSVG size="20" color="#64748b"></UserSVG>
-      </template>
-    </TextElement>
+    <div class="auth-input-group">
+      <div class="auth-input-wrapper">
+        <span class="icon">
+          <UserSVG size="20" color="var(--color-text-medium)"></UserSVG>
+        </span>
+        <input v-model="loginFormData.name" class="auth-input" type="text" placeholder="请输入用户名"
+          @keyup.enter="handleLogin" />
+        <span class="auth-input-highlight"></span>
+      </div>
+    </div>
 
-    <TextElement name="password" input-type="password" placeholder="请输入密码" rules="required|min:6" :debounce="300"
-      :messages="{
-        required: '密码不能为空',
-        min: '密码至少为6个字符',
-      }">
-      <template #addon-before>
-        <PasswordSVG size="24" color="#64748b"></PasswordSVG>
-      </template>
-    </TextElement>
+    <div class="auth-input-group">
+      <div class="auth-input-wrapper">
+        <span class="icon">
+          <PasswordSVG size="20" color="var(--color-text-medium)"></PasswordSVG>
+        </span>
+        <input v-model="loginFormData.password" class="auth-input" type="password" placeholder="请输入密码"
+          @keyup.enter="handleLogin" />
+        <span class="auth-input-highlight"></span>
+      </div>
+    </div>
 
-    <ButtonElement name="submit" full @click="handleLogin"> 登录 </ButtonElement>
-  </Vueform>
+    <div v-if="errorMessage" class="auth-error">{{ errorMessage }}</div>
+
+    <button class="primary-action auth-submit-btn" @click="handleLogin">登录</button>
+  </div>
 </template>
-
-<style scoped lang="scss">
-h2 {
-  color: var(--color-text-strong);
-  margin-bottom: 1.5rem;
-}
-</style>
