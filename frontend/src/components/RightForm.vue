@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import LoginForm from './form/LoginForm.vue'
 import RegisterForm from './form/RegisterForm.vue'
 
-const isLogin = ref(false)
+const isLogin = ref(true)
 </script>
 
 <template>
@@ -34,7 +34,7 @@ const isLogin = ref(false)
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: all 0.4s ease-in-out;
+  transition: all 0.2s ease-out;
 }
 
 .content {
