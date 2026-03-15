@@ -6,8 +6,11 @@
   <router-view></router-view>
 </template>
 
-<style>
-@import './../node_modules/@vueform/vueform/dist/vueform.css';
+<style lang="scss">
+@use './../node_modules/@vueform/vueform/dist/vueform.css';
+@use '@/styles/variables.scss';
+@use '@/styles/common.scss';
+@use '@/styles/transitions.scss';
 
 * {
   font-family:

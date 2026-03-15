@@ -129,8 +129,8 @@ function shortText(value, fallback = '暂无内容') {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  border-right: 1px solid #d1e4df;
-  background: #f8fbfa;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-bg-light);
   overflow: hidden;
 }
 
@@ -138,83 +138,17 @@ function shortText(value, fallback = '暂无内容') {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: #fff;
+  background: var(--color-bg-base);
   overflow-y: auto;
 }
 
-/* ───────────────── Section / toolbar / pager ───────────────── */
-.section-head,
-.material-head,
-.detail-title-row {
+/* ───────────────── Material head ───────────────── */
+.material-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-}
-
-.section-head {
-  padding: 10px 14px;
-  border-bottom: 1px solid #e2eeeb;
-  flex-shrink: 0;
-}
-
-.section-head h3 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: #17313a;
-}
-
-.section-head p {
-  margin: 3px 0 0;
-  font-size: 13px;
-  color: #5e7379;
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-bottom: 1px solid #e2eeeb;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
-
-.toolbar input {
-  flex: 1 1 160px;
-  border: 1px solid #d1e4df;
-  background: #fff;
-  border-radius: 6px;
-  padding: 7px 10px;
-  font: inherit;
-  color: #17313a;
-  box-sizing: border-box;
-}
-
-.pager {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 8px 14px;
-  border-top: 1px solid #e2eeeb;
-  font-size: 13px;
-  color: #5e7379;
-  flex-shrink: 0;
-}
-
-/* ───────────────── Buttons ───────────────── */
-.secondary-action {
-  border: none;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  padding: 7px 12px;
-  border-radius: 7px;
-  font-weight: 600;
-  font-size: 14px;
-  background: rgba(209, 228, 223, 0.7);
-  color: #17313a;
+  margin-bottom: 4px;
 }
 
 /* ───────────────── Material list ───────────────── */
@@ -228,101 +162,70 @@ function shortText(value, fallback = '暂无内容') {
 
 .material-item {
   padding: 10px 14px;
-  border-bottom: 1px solid #e8f0ee;
+  border-bottom: 1px solid var(--color-border-item);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background var(--transition-fast);
   flex-shrink: 0;
-}
 
-.material-item:hover {
-  background: rgba(17, 150, 127, 0.05);
-}
+  &:hover {
+    background: rgba(17, 150, 127, 0.05);
+  }
 
-.material-item.active {
-  background: rgba(17, 150, 127, 0.09);
-  border-left: 3px solid #11967f;
-  padding-left: 11px;
-}
+  &.active {
+    background: rgba(17, 150, 127, 0.09);
+    border-left: 3px solid var(--color-active-border);
+    padding-left: 11px;
+  }
 
-.material-item h4 {
-  margin: 0 0 3px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #17313a;
-}
+  h4 {
+    margin: 0 0 3px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text-strong);
+  }
 
-.material-item p {
-  margin: 0;
-  font-size: 13px;
-  color: #5e7379;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.material-head {
-  margin-bottom: 4px;
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--color-text-medium);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .type-badge {
   padding: 3px 9px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 12px;
   font-weight: 700;
   background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
+  color: var(--color-orange);
   white-space: nowrap;
 }
 
 /* ───────────────── Material detail ───────────────── */
-.detail-card {
-  padding: 16px 20px;
-  border-bottom: 1px solid #e2eeeb;
-}
-
 .detail-card.accent {
   background: rgba(17, 150, 127, 0.03);
-  border-top: 3px solid #11967f;
-}
-
-.detail-title-row {
-  margin-bottom: 12px;
+  border-top: 3px solid var(--color-primary);
+  border-left: none;
 }
 
 .detail-title-row h4 {
-  margin: 0;
   font-size: 16px;
-  font-weight: 700;
-}
-
-.summary-label {
-  margin: 0 0 3px;
-  font-size: 12px;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: #2c7c6e;
 }
 
 .material-content {
   padding: 12px 14px;
-  border-left: 2px solid #d1e4df;
-  background: #f8fbfa;
-}
+  border-left: 2px solid var(--color-border);
+  background: var(--color-bg-light);
 
-.material-content p {
-  margin: 0;
-  color: #5e7379;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.empty-card {
-  padding: 24px 16px;
-  color: #9eb3ae;
-  font-size: 14px;
-  line-height: 1.6;
-  text-align: center;
-  flex-shrink: 0;
+  p {
+    margin: 0;
+    color: var(--color-text-medium);
+    font-size: 14px;
+    line-height: 1.6;
+  }
 }
 
 @media (max-width: 1080px) {
@@ -334,7 +237,7 @@ function shortText(value, fallback = '暂无内容') {
 
   .material-list-card {
     border-right: none;
-    border-bottom: 1px solid #d1e4df;
+    border-bottom: 1px solid var(--color-border);
     max-height: 340px;
     overflow: hidden;
   }

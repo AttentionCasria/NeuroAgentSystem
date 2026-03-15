@@ -3,45 +3,65 @@ defineOptions({
   name: 'LoginIndex',
 })
 import LeftIntro from '@/components/LeftIntro.vue'
-import RightForm from '@/components/RightForm.vue'
+import RightForm from '@/components/form/RightForm.vue'
 </script>
 
 <template>
-  <div class="container">
-    <div class="left-intro">
+  <div class="login-page">
+    <div class="login-left">
       <LeftIntro></LeftIntro>
     </div>
-    <div class="right-form">
+    <div class="login-right">
       <RightForm></RightForm>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
-.container {
+.login-page {
   display: flex;
   width: 100%;
   height: 100vh;
+  background: var(--color-bg-base);
+}
 
-  .left-intro {
-    flex: 6;
-    min-width: 0;
-    background-color: #f0f7ff;
-    color: #1e293b;
-    display: flex;
+.login-left {
+  flex: 6;
+  min-width: 0;
+  background: var(--color-bg-light);
+  color: var(--color-text-strong);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 2rem;
+  border-right: 1px solid var(--color-border);
+}
+
+.login-right {
+  flex: 4;
+  min-width: 0;
+  background: var(--color-bg-base);
+  color: var(--color-text-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 960px) {
+  .login-page {
     flex-direction: column;
-    justify-content: flex-start;
-    padding: 2rem;
   }
 
-  .right-form {
-    flex: 4;
-    min-width: 0;
-    background-color: #ffffff;
-    color: #333;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .login-left {
+    flex: none;
+    min-height: 280px;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .login-right {
+    flex: 1;
+    padding: 2rem 1rem;
   }
 }
 </style>

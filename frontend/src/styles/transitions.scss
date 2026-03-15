@@ -1,0 +1,40 @@
+// ─────────────────── 通用过渡动画 ───────────────────
+
+// 淡入淡出
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+// 淡入 + 下滑
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+// 旋转加载
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 3px solid rgba(17, 150, 127, 0.15);
+  border-top-color: var(--color-primary);
+  animation: spin 0.9s linear infinite;
+}

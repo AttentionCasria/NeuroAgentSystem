@@ -70,16 +70,7 @@ async function handleLogin() {
 
 <style scoped lang="scss">
 h2 {
-  color: #1e293b;
+  color: var(--color-text-strong);
   margin-bottom: 1.5rem;
-}
-
-.go-register {
-  color: #3b82f6;
-  cursor: pointer;
-
-  &:hover {
-    text-decoration: underline;
-  }
 }
 </style>

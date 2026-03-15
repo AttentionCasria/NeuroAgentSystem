@@ -92,7 +92,7 @@ const handleFileChange = async (e) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: #64748b;
+  color: var(--color-text-medium);
 
   .file-input {
     display: none;
@@ -100,7 +100,7 @@ const handleFileChange = async (e) => {
 
   .tip-text {
     margin-top: 8px;
-    color: #ef4444;
+    color: var(--color-red);
     font-size: 14px;
   }
 
@@ -113,7 +113,7 @@ const handleFileChange = async (e) => {
     :deep(.app-avatar) {
       width: 120px !important;
       height: 120px !important;
-      border: 2px solid #3b82f6;
+      border: 2px solid var(--color-primary);
     }
 
     :deep(.avatar-text.is-short) {
@@ -141,7 +141,7 @@ const handleFileChange = async (e) => {
       justify-content: center;
       align-items: center;
       opacity: 0;
-      transition: opacity 0.2s;
+      transition: opacity var(--transition-slow);
     }
 
     &:hover .avatar-overlay {

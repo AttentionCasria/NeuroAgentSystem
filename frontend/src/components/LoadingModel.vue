@@ -1,11 +1,6 @@
 <template>
   <transition name="fade">
-    <div
-      v-if="show"
-      class="lm-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-label="加载中对话框">
+    <div v-if="show" class="lm-overlay" role="dialog" aria-modal="true" aria-label="加载中对话框">
       <div class="lm-container">
         <div class="lm-spinner"></div>
 
@@ -99,7 +94,6 @@ onBeforeUnmount(() => {
 .lm-overlay {
   position: fixed;
   inset: 0;
-  /* top:0; right:0; bottom:0; left:0 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -113,25 +107,23 @@ onBeforeUnmount(() => {
   min-width: 220px;
   max-width: 90%;
   padding: 20px 28px;
-  border-radius: 8px;
-  background: #ffffff;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-base);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
   pointer-events: auto;
-  /* 保证容器内元素可交互（虽然没有交互） */
 }
 
-/* 圆形加载器（将通过 border 创建动画） */
+/* 圆形加载器 */
 .lm-spinner {
   width: 56px;
   height: 56px;
   border-radius: 50%;
   border: 6px solid rgba(0, 0, 0, 0.08);
-  border-top-color: #07bf9b;
-  /* accent color */
+  border-top-color: var(--color-primary-light);
   animation: lm-spin 1s linear infinite;
 }
 
@@ -155,24 +147,13 @@ onBeforeUnmount(() => {
 
 .lm-sub {
   font-size: 13px;
-  color: #666;
+  color: var(--color-text-medium);
 }
 
 .lm-tip {
   margin-top: 6px;
   font-size: 12px;
-  color: #07bf9b;
+  color: var(--color-primary-light);
   opacity: 0.9;
-}
-
-/* 简单淡入效果 */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 180ms ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
 }
 </style>

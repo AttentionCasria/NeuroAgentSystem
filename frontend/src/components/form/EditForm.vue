@@ -99,11 +99,4 @@ async function handleLogout() {
   flex-direction: column;
   gap: 10px;
 }
-
-.preview img {
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 50%;
-}
 </style>

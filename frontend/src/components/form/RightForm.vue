@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
-import LoginForm from './form/LoginForm.vue'
-import RegisterForm from './form/RegisterForm.vue'
+import LoginForm from './LoginForm.vue'
+import RegisterForm from './RegisterForm.vue'
 
 const isLogin = ref(true)
 </script>
@@ -44,7 +44,7 @@ const isLogin = ref(true)
 .switch-text {
   margin-top: 1rem;
   text-align: center;
-  color: #3b82f6;
+  color: var(--color-primary);
   cursor: pointer;
 
   &:hover {

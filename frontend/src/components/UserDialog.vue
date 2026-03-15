@@ -192,10 +192,10 @@ const handleChangeAvatar = async () => {
   top: calc(100% + 10px);
   right: 0;
   width: 160px;
-  background: #fff;
+  background: var(--color-bg-base);
   border-radius: 10px;
   border: 1px solid #e5e7eb;
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
+  box-shadow: var(--shadow-menu);
   padding: 6px;
   z-index: 40;
 
@@ -208,7 +208,7 @@ const handleChangeAvatar = async () => {
     height: 10px;
     border-top: 1px solid #e5e7eb;
     border-left: 1px solid #e5e7eb;
-    background: #fff;
+    background: var(--color-bg-base);
     transform: rotate(45deg);
   }
 
@@ -218,11 +218,11 @@ const handleChangeAvatar = async () => {
     background: transparent;
     text-align: left;
     padding: 10px 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 14px;
     color: #334155;
-    transition: all 0.15s ease;
+    transition: all var(--transition-fast);
 
     &:hover {
       background: #f1f5f9;
@@ -230,7 +230,7 @@ const handleChangeAvatar = async () => {
     }
 
     &.danger {
-      color: #dc2626;
+      color: var(--color-red);
 
       &:hover {
         background: #fef2f2;
@@ -240,19 +240,13 @@ const handleChangeAvatar = async () => {
 }
 
 .dialog-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 90;
+  background: rgba(15, 23, 42, 0.45);
 }
 
 .dialog-card {
   width: min(92vw, 420px);
-  background: #fff;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.24);
   border: 1px solid #e2e8f0;
   overflow: hidden;
@@ -267,7 +261,7 @@ const handleChangeAvatar = async () => {
     h3 {
       margin: 0;
       font-size: 17px;
-      color: #0f172a;
+      color: var(--color-text-strong);
     }
 
     .close-btn {
@@ -275,7 +269,7 @@ const handleChangeAvatar = async () => {
       background: transparent;
       font-size: 22px;
       line-height: 1;
-      color: #64748b;
+      color: var(--color-text-medium);
       cursor: pointer;
 
       &:hover {
@@ -300,16 +294,16 @@ const handleChangeAvatar = async () => {
 
     input {
       height: 40px;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
       padding: 0 12px;
       font-size: 14px;
-      color: #0f172a;
+      color: var(--color-text-strong);
 
       &:focus {
         outline: none;
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(17, 150, 127, 0.15);
       }
     }
 
@@ -326,11 +320,11 @@ const handleChangeAvatar = async () => {
 
     button {
       border: none;
-      border-radius: 8px;
+      border-radius: var(--radius-md);
       padding: 8px 14px;
       cursor: pointer;
       font-size: 14px;
-      transition: all 0.15s ease;
+      transition: all var(--transition-fast);
     }
 
     .plain-btn {
@@ -343,34 +337,13 @@ const handleChangeAvatar = async () => {
     }
 
     .primary-btn {
-      background: #3b82f6;
+      background: var(--color-primary-gradient);
       color: #fff;
 
       &:hover {
-        background: #2563eb;
+        opacity: 0.88;
       }
     }
   }
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-.fade-slide-enter-active,
-.fade-slide-leave-active {
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.fade-slide-enter-from,
-.fade-slide-leave-to {
-  opacity: 0;
-  transform: translateY(-6px);
 }
 </style>

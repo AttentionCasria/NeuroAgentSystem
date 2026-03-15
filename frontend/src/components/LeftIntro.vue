@@ -202,12 +202,14 @@ function typing(text, delay = TYPE_DELAY) {
   right: 0;
   font-size: 2rem;
   margin-bottom: 2rem;
+  color: var(--color-text-strong);
 }
 
 .sub-title {
   font-size: 1.4rem;
   margin-top: 12px;
   margin-bottom: 2rem;
+  color: var(--color-text-medium);
 }
 
 .card-area {
@@ -232,27 +234,27 @@ function typing(text, delay = TYPE_DELAY) {
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  border-radius: 22px;
-  border: 1px solid rgba(59, 130, 246, 0.25);
-  background: linear-gradient(140deg, #ffffff, #f7faff);
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(17, 150, 127, 0.2);
+  background: linear-gradient(140deg, #ffffff, var(--color-bg-light));
   box-shadow:
-    0 16px 40px rgba(15, 23, 42, 0.12),
+    0 16px 40px rgba(15, 23, 42, 0.1),
     0 1px 0 rgba(255, 255, 255, 0.8) inset;
   will-change: transform, opacity;
   transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-}
 
-.intro-card.leaving {
-  opacity: 0 !important;
-  transition:
-    transform 0.46s cubic-bezier(0.2, 0.78, 0.2, 1),
-    opacity 0.2s cubic-bezier(0.4, 0, 1, 1);
+  &.leaving {
+    opacity: 0 !important;
+    transition:
+      transform 0.46s cubic-bezier(0.2, 0.78, 0.2, 1),
+      opacity 0.2s cubic-bezier(0.4, 0, 1, 1);
+  }
 }
 
 .typing-text {
   font-size: 1.85rem;
   line-height: 1.6;
-  color: #0f172a;
+  color: var(--color-text-strong);
   text-align: center;
   white-space: pre-wrap;
   word-break: break-word;
@@ -260,7 +262,7 @@ function typing(text, delay = TYPE_DELAY) {
 
 .cursor {
   margin-left: 0.3rem;
-  color: #3b82f6;
+  color: var(--color-primary);
   animation: blink 1s infinite;
   font-size: 1.8rem;
 }

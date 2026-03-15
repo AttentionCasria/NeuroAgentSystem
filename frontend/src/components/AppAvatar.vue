@@ -87,7 +87,7 @@ const handleImageError = () => {
   overflow: hidden;
   border-radius: 50%;
   border: 2px solid #eff6ff;
-  background: linear-gradient(135deg, #3b82f6, #14b8a6);
+  background: linear-gradient(135deg, var(--color-primary), #14b8a6);
   color: #fff;
   user-select: none;
   flex-shrink: 0;

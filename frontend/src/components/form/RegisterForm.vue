@@ -102,14 +102,7 @@ async function handleRegister() {
 
 <style scoped lang="scss">
 h2 {
-  color: #1e293b;
+  color: var(--color-text-strong);
   margin-bottom: 1.5rem;
-}
-
-.preview img {
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 50%;
 }
 </style>

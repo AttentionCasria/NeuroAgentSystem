@@ -1,0 +1,350 @@
+// ─────────────────── 通用按钮 ───────────────────
+.primary-action {
+  display: inline-block;
+  padding: 9px 14px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 13px;
+  background: var(--color-primary-gradient);
+  color: #fff;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  flex-shrink: 0;
+
+  &:hover {
+    opacity: 0.88;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.secondary-action {
+  display: inline-block;
+  padding: 7px 12px;
+  border: none;
+  border-radius: 7px;
+  font-weight: 600;
+  font-size: 13px;
+  background: rgba(209, 228, 223, 0.7);
+  color: var(--color-text-strong);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.ghost-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-medium);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  flex-shrink: 0;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.07);
+  }
+
+  &.danger:hover {
+    color: var(--color-red);
+    background: rgba(239, 68, 68, 0.1);
+  }
+}
+
+.link-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--color-primary-dark);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all var(--transition-normal);
+}
+
+.danger-text {
+  color: var(--color-red);
+}
+
+// ─────────────────── 区域头部 ───────────────────
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-border-light);
+  flex-shrink: 0;
+
+  &.compact {
+    align-items: flex-start;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text-strong);
+    letter-spacing: 0;
+  }
+
+  p {
+    margin: 3px 0 0;
+    font-size: 13px;
+    color: var(--color-text-medium);
+  }
+}
+
+// ─────────────────── 空状态 ───────────────────
+.empty-card {
+  padding: 24px 16px;
+  color: var(--color-text-weak);
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+  flex-shrink: 0;
+
+  &.compact {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+}
+
+// ─────────────────── 工具栏 ───────────────────
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--color-border-light);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+
+  input {
+    flex: 1 1 120px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-input);
+    border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    font: inherit;
+    color: var(--color-text-strong);
+    box-sizing: border-box;
+  }
+}
+
+// ─────────────────── 分页器 ───────────────────
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 14px;
+  border-top: 1px solid var(--color-border-light);
+  font-size: 12px;
+  color: var(--color-text-medium);
+  flex-shrink: 0;
+}
+
+// ─────────────────── 列表项通用交互 ───────────────────
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-border-item);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--color-hover-bg);
+  }
+
+  &.active {
+    background: var(--color-active-bg);
+    border-left: 3px solid var(--color-active-border);
+    padding-left: 11px;
+  }
+
+  h4 {
+    margin: 0 0 3px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text-strong);
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--color-text-medium);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    color: var(--color-text-weak);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+}
+
+// ─────────────────── 标签徽章 ───────────────────
+.badge {
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+
+  &.badge-status {
+    background: rgba(148, 163, 184, 0.14);
+    color: #475569;
+
+    &.live {
+      background: rgba(17, 150, 127, 0.14);
+      color: var(--color-primary-dark);
+    }
+  }
+
+  &.badge-risk {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--color-orange);
+  }
+
+  &.badge-type {
+    background: rgba(245, 158, 11, 0.12);
+    color: var(--color-orange);
+  }
+}
+
+// ─────────────────── 摘要标签 ───────────────────
+.summary-label {
+  margin: 0 0 3px;
+  font-size: 12px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--color-text-label);
+}
+
+// ─────────────────── 表单字段 ───────────────────
+.field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--color-text-strong);
+
+  input,
+  textarea,
+  select {
+    width: 100%;
+    box-sizing: border-box;
+    font: inherit;
+    color: var(--color-text-strong);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-input);
+    border-radius: var(--radius-md);
+    padding: 7px 10px;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+}
+
+// ─────────────────── 对话框通用 ───────────────────
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 31, 37, 0.34);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 110;
+  padding: 20px;
+}
+
+.dialog-card {
+  width: min(720px, 100%);
+  max-height: min(84vh, 900px);
+  overflow: auto;
+  border-radius: var(--radius-dialog);
+  border: 1px solid rgba(217, 230, 226, 0.95);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow-dialog);
+  padding: 22px;
+}
+
+.dialog-head,
+.dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dialog-footer {
+  margin-top: 18px;
+  justify-content: flex-end;
+}
+
+// ─────────────────── 详情卡片 ───────────────────
+.detail-card {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-border-light);
+
+  &.accent {
+    background: rgba(17, 150, 127, 0.04);
+    border-left: 3px solid var(--color-primary);
+    padding-left: 17px;
+  }
+}
+
+.detail-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+
+  h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+  }
+}
+
+// ─────────────────── 面板容器 ───────────────────
+.panel-left {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-bg-light);
+  overflow: hidden;
+}
+
+.panel-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--color-bg-base);
+  overflow-y: auto;
+}
+
+// ─────────────────── 自定义滚动条 ───────────────────
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}

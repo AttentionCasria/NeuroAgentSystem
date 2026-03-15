@@ -205,8 +205,8 @@ function formatDateTime(value) {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  border-right: 1px solid #d1e4df;
-  background: #f8fbfa;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-bg-light);
   overflow: hidden;
 }
 
@@ -214,16 +214,13 @@ function formatDateTime(value) {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: #fff;
+  background: var(--color-bg-base);
   overflow-y: auto;
 }
 
-/* ─────────────────── Section heads ─────────────────── */
-.section-head,
-.pager,
+/* ─────────────────── Section layout ─────────────────── */
 .patient-item-head,
-.patient-item-actions,
-.detail-title-row {
+.patient-item-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -231,52 +228,8 @@ function formatDateTime(value) {
 }
 
 .section-head {
-  padding: 10px 14px;
-  border-bottom: 1px solid #e2eeeb;
-  flex-shrink: 0;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.section-head {
-  padding: 10px 14px;
-  border-bottom: 1px solid #e2eeeb;
-  flex-shrink: 0;
-}
-
-.section-head h3 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: #17313a;
-}
-
-.section-head p {
-  margin: 3px 0 0;
-  font-size: 13px;
-  color: #5e7379;
-}
-
-/* ─────────────────── Toolbar ─────────────────── */
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-bottom: 1px solid #e2eeeb;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
-
-.toolbar input {
-  flex: 1 1 120px;
-  border: 1px solid #d1e4df;
-  background: #fff;
-  border-radius: 6px;
-  padding: 7px 10px;
-  font: inherit;
-  color: #17313a;
-  box-sizing: border-box;
 }
 
 /* ─────────────────── Patient list ─────────────────── */
@@ -290,41 +243,41 @@ function formatDateTime(value) {
 
 .patient-item {
   padding: 10px 14px;
-  border-bottom: 1px solid #e8f0ee;
+  border-bottom: 1px solid var(--color-border-item);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background var(--transition-fast);
   flex-shrink: 0;
-}
 
-.patient-item:hover {
-  background: rgba(17, 150, 127, 0.05);
-}
+  &:hover {
+    background: rgba(17, 150, 127, 0.05);
+  }
 
-.patient-item.active {
-  background: rgba(17, 150, 127, 0.09);
-  border-left: 3px solid #11967f;
-  padding-left: 11px;
-}
+  &.active {
+    background: rgba(17, 150, 127, 0.09);
+    border-left: 3px solid var(--color-active-border);
+    padding-left: 11px;
+  }
 
-.patient-item h4 {
-  margin: 0 0 3px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #17313a;
-}
+  h4 {
+    margin: 0 0 3px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-text-strong);
+  }
 
-.patient-item p {
-  margin: 0 0 5px;
-  font-size: 12px;
-  color: #5e7379;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+  p {
+    margin: 0 0 5px;
+    font-size: 12px;
+    color: var(--color-text-medium);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-.patient-item small {
-  color: #9eb3ae;
-  font-size: 11px;
+  small {
+    color: var(--color-text-weak);
+    font-size: 11px;
+  }
 }
 
 .patient-item-head {
@@ -336,65 +289,14 @@ function formatDateTime(value) {
   gap: 14px;
 }
 
-/* ─────────────────── Pager ─────────────────── */
-.pager {
-  padding: 8px 14px;
-  border-top: 1px solid #e2eeeb;
-  font-size: 12px;
-  color: #5e7379;
-  flex-shrink: 0;
-}
-
-/* ─────────────────── Buttons ─────────────────── */
-.primary-action,
-.secondary-action,
-.link-btn {
-  border: none;
-  cursor: pointer;
-  transition: all 0.18s ease;
-}
-
-.primary-action {
-  padding: 8px 14px;
-  border-radius: 7px;
-  font-weight: 700;
-  font-size: 13px;
-  background: linear-gradient(135deg, #11967f 0%, #0f7666 100%);
-  color: #fff;
-}
-
-.primary-action:hover {
-  opacity: 0.88;
-}
-
-.secondary-action {
-  padding: 7px 12px;
-  border-radius: 7px;
-  font-weight: 600;
-  font-size: 13px;
-  background: rgba(209, 228, 223, 0.7);
-  color: #17313a;
-}
-
-.link-btn {
-  background: transparent;
-  padding: 0;
-  color: #0f7666;
-  font-size: 12px;
-}
-
-.danger-text {
-  color: #dc2626;
-}
-
 /* ─────────────────── Risk badge ─────────────────── */
 .risk-badge {
   padding: 3px 9px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 11px;
   font-weight: 700;
   background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
+  color: var(--color-orange);
   white-space: nowrap;
 }
 
@@ -402,27 +304,6 @@ function formatDateTime(value) {
 .detail-stack {
   display: flex;
   flex-direction: column;
-}
-
-.detail-card {
-  padding: 14px 20px;
-  border-bottom: 1px solid #e2eeeb;
-}
-
-.detail-card.accent {
-  background: rgba(17, 150, 127, 0.04);
-  border-left: 3px solid #11967f;
-  padding-left: 17px;
-}
-
-.detail-title-row {
-  margin-bottom: 10px;
-}
-
-.detail-title-row h4 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
 }
 
 .detail-card h5 {
@@ -434,7 +315,7 @@ function formatDateTime(value) {
 
 .detail-card p,
 .detail-card small {
-  color: #5e7379;
+  color: var(--color-text-medium);
   font-size: 13px;
   margin: 0;
   line-height: 1.6;
@@ -444,47 +325,30 @@ function formatDateTime(value) {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-}
 
-.detail-grid.single {
-  grid-template-columns: 1fr;
+  &.single {
+    grid-template-columns: 1fr;
+  }
+
+  article {
+    padding: 10px 12px;
+    border-left: 2px solid var(--color-border);
+    background: var(--color-bg-light);
+  }
 }
 
 .analysis-input {
   width: 100%;
-  border: 1px solid #d1e4df;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-input);
   border-radius: 7px;
   padding: 9px 12px;
   font: inherit;
-  color: #17313a;
+  color: var(--color-text-strong);
   box-sizing: border-box;
   min-height: 100px;
   resize: vertical;
   margin-bottom: 10px;
-}
-
-.detail-grid article {
-  padding: 10px 12px;
-  border-left: 2px solid #d1e4df;
-  background: #f8fbfa;
-}
-
-.summary-label {
-  margin: 0 0 3px;
-  font-size: 11px;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: #2c7c6e;
-}
-
-.empty-card {
-  padding: 24px 16px;
-  color: #9eb3ae;
-  font-size: 14px;
-  line-height: 1.6;
-  text-align: center;
-  flex-shrink: 0;
 }
 
 @media (max-width: 1080px) {
@@ -496,7 +360,7 @@ function formatDateTime(value) {
 
   .patient-list-card {
     border-right: none;
-    border-bottom: 1px solid #d1e4df;
+    border-bottom: 1px solid var(--color-border);
     max-height: 340px;
     overflow: hidden;
   }

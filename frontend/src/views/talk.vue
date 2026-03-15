@@ -684,7 +684,7 @@ function openPatientWorkspace(patientId) {
 <style scoped lang="scss">
 :global(body) {
   margin: 0;
-  background: #fff;
+  background: var(--color-bg-base);
 }
 
 .workspace-shell {
@@ -692,8 +692,8 @@ function openPatientWorkspace(patientId) {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  color: #17313a;
-  background: #fff;
+  color: var(--color-text-strong);
+  background: var(--color-bg-base);
 }
 
 .tab-section {
@@ -703,8 +703,8 @@ function openPatientWorkspace(patientId) {
   align-items: stretch;
   justify-content: space-between;
   gap: 0;
-  border-bottom: 1px solid #d1e4df;
-  background: #fff;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-base);
   flex-shrink: 0;
 }
 
@@ -722,9 +722,9 @@ function openPatientWorkspace(patientId) {
   flex-shrink: 0;
   padding: 0 12px;
   margin: 6px 0;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background 0.18s ease;
+  transition: background var(--transition-normal);
 
   &:hover {
     background: rgba(0, 0, 0, 0.05);
@@ -738,7 +738,7 @@ function openPatientWorkspace(patientId) {
 }
 
 .user-anchor small {
-  color: #5e7379;
+  color: var(--color-text-medium);
   font-size: 12px;
 }
 
@@ -756,27 +756,18 @@ function openPatientWorkspace(patientId) {
   width: 220px;
   padding: 28px 22px;
   border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 8px 32px rgba(15, 65, 79, 0.18);
+  background: var(--color-bg-base);
+  box-shadow: var(--shadow-card);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-}
 
-.overlay-card p {
-  color: #5e7379;
-  margin: 0;
-  font-size: 14px;
-}
-
-.spinner {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 3px solid rgba(17, 150, 127, 0.15);
-  border-top-color: #11967f;
-  animation: rotate 0.9s linear infinite;
+  p {
+    color: var(--color-text-medium);
+    margin: 0;
+    font-size: 14px;
+  }
 }
 
 @keyframes rotate {

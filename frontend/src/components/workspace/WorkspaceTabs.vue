@@ -36,11 +36,11 @@ const emit = defineEmits(['change'])
   border-bottom: 2px solid transparent;
   padding: 0 18px;
   background: transparent;
-  color: #5e7379;
+  color: var(--color-text-medium);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all var(--transition-normal);
   white-space: nowrap;
   height: 100%;
 
@@ -49,13 +49,13 @@ const emit = defineEmits(['change'])
   }
 
   &:hover {
-    color: #17313a;
+    color: var(--color-text-strong);
     background: rgba(0, 0, 0, 0.03);
   }
 
   &.active {
-    color: #11967f;
-    border-bottom-color: #11967f;
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
     background: transparent;
   }
 }
