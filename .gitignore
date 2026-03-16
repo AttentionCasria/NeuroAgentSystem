@@ -12,3 +12,12 @@ target/
 __pycache__/
 *.pyc
 .env
+
+# macOS
+.DS_Store
+
+# Backup build artifacts
+frontend/(backup01)dist/
+
+# Claude Code memory (local tool, not project code)
+memory/
