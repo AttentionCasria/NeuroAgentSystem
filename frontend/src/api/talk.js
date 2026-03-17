@@ -226,11 +226,17 @@ function streamRequest(params, onChunk, onThinking) {
               handleMessageBlock(block)
               if (finished) return
             }
-            // 流结束但未收到 done 事件：视为网络意外断开，抛出可重试错误
+            // 流结束但未收到 done 事件：
+            // 有 lastEventId（曾收到过事件）→ 抛 isNetworkError 供外层重试
+            // 无 lastEventId（连接建立即断）→ 静默兜底，以累积内容 resolve
             if (!finished) {
-              const err = new Error('连接意外关闭')
-              err.isNetworkError = true
-              throw err
+              if (lastEventId) {
+                const err = new Error('连接意外关闭')
+                err.isNetworkError = true
+                throw err
+              } else {
+                safeResolve(buildResult())
+              }
             }
             return
           }
