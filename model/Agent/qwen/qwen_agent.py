@@ -411,13 +411,14 @@ class qwenAgent:
 
             if intent_type == "irrelevant":
                 logging.info("=== 意图被分类为 irrelevant，返回拒绝消息 ===")
-                yield {"type": "result", "content": "请提供脑卒中医疗临床相关查询，此输入无关。"}
+                # 使用 chunk 类型与其他路径保持一致，前端直接渲染无需二次转换
+                yield {"type": "chunk", "content": "请提供脑卒中医疗临床相关查询，此输入无关。"}
                 return
 
             if intent_type == "knowledge":
                 logging.info("=== 意图被分类为 knowledge，进入知识问答流程 ===")
                 if show_thinking:
-                    yield self._emit_thinking("Intent", "✅ 意图验证：通用知识问题", "使用 Qwen-Max 直接回答")
+                    yield self._emit_thinking("Intent", "✅ 意图验证：通用知识问题", "使用 Qwen-Max 流式回答")
                 knowledge_prompt = f"""你是三甲医院神经内科主任医师。请基于循证医学知识，直接回答以下脑卒中相关通用问题。
 
                 问题：{case_text}
@@ -427,9 +428,11 @@ class qwenAgent:
                 - 禁止确诊语气
                 - 禁止具体剂量
                 - 如果需要，引用权威指南"""
-                knowledge_response = await self.llm_proposer.ainvoke([HumanMessage(content=knowledge_prompt)])
-                answer = knowledge_response.content if hasattr(knowledge_response, "content") else str(knowledge_response)
-                yield {"type": "result", "content": answer}
+                # 改用 astream 逐 token yield chunk 事件，实现打字机效果
+                async for chunk in self.llm_proposer.astream([HumanMessage(content=knowledge_prompt)]):
+                    content = chunk.content if hasattr(chunk, "content") else str(chunk)
+                    if content:
+                        yield {"type": "chunk", "content": content}
                 return
 
             if show_thinking:
