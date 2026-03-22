@@ -6,6 +6,9 @@ import DeleteSVG from '@/components/svg/DeleteSVG.vue'
 import DeleteAllSVG from '@/components/svg/DeleteAllSVG.vue'
 import SendSVG from '@/components/svg/SendSVG.vue'
 import ThinkingPanel from './ThinkingPanel.vue'
+import PdfPreviewModal from '@/components/PdfPreviewModal.vue'
+import { injectRefLinks } from '@/utils/referenceParser'
+import { matchDocumentAPI } from '@/api/documents'
 
 defineOptions({ name: 'ChatWorkspace' })
 
@@ -122,11 +125,79 @@ function toggleSyncPanel() {
   isSyncExpanded.value = !isSyncExpanded.value
 }
 
+// ── 文献引用点击弹窗（方案 A：事件委托） ─────────────────────────────
+// 弹窗状态：点击《文献名》后显示，提供[在线预览][下载]操作
+const refPopup = ref({
+  visible: false,
+  name: '',
+  loading: false,
+  previewUrl: '',
+  downloadUrl: '',
+  error: '',
+})
+
+// PDF 预览弹窗（复用 PdfPreviewModal）
+const pdfPreviewState = ref({ visible: false, url: '', downloadUrl: '', fileName: '' })
+
+// 文献名 → 签名 URL 的内存缓存（30 分钟有效，与 OSS 签名 URL 有效期一致）
+const refUrlCache = new Map()
+
+// 事件委托：捕获 .ref-link span 的点击
+function handleRefClick(e) {
+  const span = e.target.closest('.ref-link')
+  if (!span) return
+  const name = span.dataset.refName
+  if (!name) return
+  openRefPopup(name)
+}
+
+async function openRefPopup(name) {
+  refPopup.value = { visible: true, name, loading: true, previewUrl: '', downloadUrl: '', error: '' }
+
+  // 命中缓存则直接使用，避免重复请求
+  if (refUrlCache.has(name)) {
+    const cached = refUrlCache.get(name)
+    refPopup.value = { ...refPopup.value, ...cached, loading: false }
+    return
+  }
+
+  try {
+    const res = await matchDocumentAPI(name)
+    if (res.data.code === 1) {
+      const { previewUrl, downloadUrl } = res.data.data
+      // 写入缓存，30 分钟后自动清除
+      refUrlCache.set(name, { previewUrl, downloadUrl })
+      setTimeout(() => refUrlCache.delete(name), 30 * 60 * 1000)
+      refPopup.value = { ...refPopup.value, previewUrl, downloadUrl, loading: false }
+    } else {
+      refPopup.value = { ...refPopup.value, loading: false, error: '未找到对应文档' }
+    }
+  } catch {
+    refPopup.value = { ...refPopup.value, loading: false, error: '网络错误，请稍后重试' }
+  }
+}
+
+function openPdfPreview() {
+  pdfPreviewState.value = {
+    visible: true,
+    url: refPopup.value.previewUrl,
+    downloadUrl: refPopup.value.downloadUrl,
+    fileName: refPopup.value.name,
+  }
+  refPopup.value.visible = false
+}
+
+function downloadRef() {
+  if (refPopup.value.downloadUrl) window.open(refPopup.value.downloadUrl, '_blank')
+}
+
 onMounted(() => {
   syncLayoutState()
   window.addEventListener('resize', syncLayoutState)
   // 监听滚动，检测用户是否主动上滑
   chatContainerRef.value?.addEventListener('scroll', onChatScroll, { passive: true })
+  // 文献引用点击委托（捕获 v-html 内部的 .ref-link span）
+  chatContainerRef.value?.addEventListener('click', handleRefClick)
   // 组件挂载时立即渲染一次（应对路由切换时 props 已携带历史消息的情况）
   flushRender(true)
 })
@@ -134,6 +205,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('resize', syncLayoutState)
   chatContainerRef.value?.removeEventListener('scroll', onChatScroll)
+  chatContainerRef.value?.removeEventListener('click', handleRefClick)
   // 取消挂起的 RAF，防止组件卸载后仍触发渲染导致 Vue 警告
   if (renderRafId !== null) {
     cancelAnimationFrame(renderRafId)
@@ -242,11 +314,16 @@ watch(draftMessage, () => {
 const renderMarkdown = (raw = '') => {
   if (!raw) return ''
 
+  // 在 marked 解析前，将《文献名》包裹成可点击 span（方案 A）
+  const preprocessed = injectRefLinks(String(raw))
+
   return DOMPurify.sanitize(
-    marked.parse(String(raw), {
+    marked.parse(preprocessed, {
       breaks: true,
       gfm: true,
     }),
+    // 允许 ref-link span 上的 data-ref-name 属性通过 DOMPurify 过滤
+    { ADD_ATTR: ['data-ref-name'] },
   )
 }
 
@@ -436,6 +513,31 @@ function getThinkingData(msgIndex) {
         </button>
       </div>
     </div>
+
+    <!-- ── 文献引用操作弹窗 ─────────────────────────── -->
+    <Teleport to="body">
+      <div v-if="refPopup.visible" class="ref-popup-backdrop" @click.self="refPopup.visible = false">
+        <div class="ref-popup">
+          <p class="ref-popup-title">《{{ refPopup.name }}》</p>
+          <div v-if="refPopup.loading" class="ref-popup-status">匹配中...</div>
+          <div v-else-if="refPopup.error" class="ref-popup-status error">{{ refPopup.error }}</div>
+          <div v-else class="ref-popup-actions">
+            <button type="button" class="primary-action" style="width:auto;margin:0" @click="openPdfPreview">在线预览</button>
+            <button type="button" class="secondary-action" @click="downloadRef">下载</button>
+          </div>
+          <button type="button" class="ref-popup-close" @click="refPopup.visible = false">×</button>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- ── PDF 预览弹窗（复用 PdfPreviewModal） ──────── -->
+    <PdfPreviewModal
+      :visible="pdfPreviewState.visible"
+      :url="pdfPreviewState.url"
+      :file-name="pdfPreviewState.fileName"
+      :download-url="pdfPreviewState.downloadUrl"
+      @close="pdfPreviewState.visible = false"
+    />
 
     <div v-if="isMobileLayout && isSyncExpanded" class="sync-backdrop" @click="toggleSyncPanel"></div>
 
@@ -787,6 +889,77 @@ function getThinkingData(msgIndex) {
 .plain-text {
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+/* ─── 文献引用可点击样式（由 renderMarkdown 注入的 span） ─── */
+:deep(.ref-link) {
+  color: var(--color-primary, #11967f);
+  text-decoration: underline dotted;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(17, 150, 127, 0.1);
+  }
+}
+
+/* ─── 文献引用操作弹窗 ─────────────────────────────────── */
+.ref-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+}
+
+.ref-popup {
+  position: relative;
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px 24px;
+  min-width: 260px;
+  max-width: 360px;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ref-popup-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  padding-right: 24px;
+}
+
+.ref-popup-status {
+  font-size: 14px;
+  color: #6b7280;
+
+  &.error { color: #dc2626; }
+}
+
+.ref-popup-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.ref-popup-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  color: #9ca3af;
+  cursor: pointer;
+  line-height: 1;
+
+  &:hover { color: #374151; }
 }
 
 /* ─────────────────── Input box ─────────────────── */

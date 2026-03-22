@@ -20,9 +20,11 @@
     "morphdom": "^2.7.8",
     "normalize.css": "^8.0.1",
     "nprogress": "^0.2.0",
+    "pdfjs-dist": "^3.11.174",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.5.0",
     "vue": "^3.5.22",
+    "vue-pdf-embed": "^2.1.4",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
