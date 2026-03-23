@@ -9,6 +9,7 @@ import ThinkingPanel from './ThinkingPanel.vue'
 import PdfPreviewModal from '@/components/PdfPreviewModal.vue'
 import { injectRefLinks } from '@/utils/referenceParser'
 import { matchDocumentAPI } from '@/api/documents'
+import { compressImage } from '@/utils/imageCompress'
 
 defineOptions({ name: 'ChatWorkspace' })
 
@@ -93,6 +94,9 @@ const emit = defineEmits([
 const draftMessage = ref('')
 const inputRef = ref(null)
 const chatContainerRef = ref(null)
+// 影像识别：待上传图片列表 [{ dataUrl, name }]，最多 3 张
+const imageList = ref([])
+const fileInputRef = ref(null)
 // 用户是否主动上滑（上滑时暂停自动滚动）
 const userScrolled = ref(false)
 const isHistoryCollapsed = ref(false)
@@ -255,7 +259,7 @@ function doRender() {
   renderedHtmlList.value = props.currentTalkList.map((msg, idx) => {
     // 偶数索引为用户消息，使用纯文本渲染（template 中用 plain-text 处理），无需解析
     if (idx % 2 === 0) return ''
-    return renderMarkdown(msg)
+    return renderMarkdown(msgText(msg))
   })
 }
 
@@ -341,13 +345,60 @@ function scrollToBottom(force = false) {
 
 function handleSendMessage() {
   const text = draftMessage.value.trim()
-  if (!text || props.isStreaming) return
-  emit('send-message', text)
+  // 有图片时允许空文字发送（纯图片提问）
+  if ((!text && imageList.value.length === 0) || props.isStreaming) return
+  emit('send-message', {
+    text: text || '请分析这张图片',
+    images: imageList.value.map((item) => item.dataUrl),
+  })
   draftMessage.value = ''
+  imageList.value = []
   nextTick(autoResize)
 }
 
-function handleCopy(text) {
+async function handleImageSelect(event) {
+  const files = Array.from(event.target.files || [])
+  if (!files.length) return
+  // 最多 3 张
+  const remaining = 3 - imageList.value.length
+  const toProcess = files.slice(0, remaining)
+  for (const file of toProcess) {
+    try {
+      const dataUrl = await compressImage(file)
+      imageList.value.push({ dataUrl, name: file.name })
+    } catch (err) {
+      alert(err.message)
+    }
+  }
+  // 清空 input，允许重复选同一文件
+  event.target.value = ''
+}
+
+function removeImage(index) {
+  imageList.value.splice(index, 1)
+}
+
+// 消息气泡中图片点击放大
+const previewImgUrl = ref('')
+function previewMsgImage(url) {
+  previewImgUrl.value = url
+}
+function closePreview() {
+  previewImgUrl.value = ''
+}
+
+// 从消息中提取纯文本（兼容字符串和 { text, images } 对象两种格式）
+function msgText(msg) {
+  return typeof msg === 'object' && msg !== null ? (msg.text || '') : (msg || '')
+}
+
+// 从消息中提取图片列表
+function msgImages(msg) {
+  return typeof msg === 'object' && msg !== null ? (msg.images || []) : []
+}
+
+function handleCopy(msg) {
+  const text = msgText(msg)
   if (!text) return
 
   if (navigator.clipboard?.writeText) {
@@ -461,7 +512,18 @@ function getThinkingData(msgIndex) {
 
             <div class="message" :class="{ user: index % 2 === 0 }">
               <template v-if="index % 2 === 0">
-                <div class="plain-text">{{ msg }}</div>
+                <!-- 图片缩略图（有图时显示，点击放大） -->
+                <div v-if="msgImages(msg).length" class="msg-image-list">
+                  <img
+                    v-for="(imgUrl, i) in msgImages(msg)"
+                    :key="i"
+                    :src="imgUrl"
+                    class="msg-image-thumb"
+                    alt="上传图片"
+                    @click="previewMsgImage(imgUrl)"
+                  />
+                </div>
+                <div class="plain-text">{{ msgText(msg) }}</div>
               </template>
               <template v-else>
                 <!-- ThinkingPanel：有思考记录时显示 DeepSeek 风格思考面板 -->
@@ -472,7 +534,7 @@ function getThinkingData(msgIndex) {
                 />
                 <!-- 降级 fallback：无思考记录时显示旧版弹跳点（兼容历史消息） -->
                 <div
-                  v-if="!msg && isThinking && index === currentTalkList.length - 1 && !getThinkingData(index)"
+                  v-if="!msgText(msg) && isThinking && index === currentTalkList.length - 1 && !getThinkingData(index)"
                   class="thinking-indicator"
                 >
                   <span class="thinking-dots">
@@ -501,12 +563,42 @@ function getThinkingData(msgIndex) {
       </main>
 
       <div class="input-box">
-        <textarea ref="inputRef" v-model="draftMessage" rows="1" placeholder="请输入症状、病史或希望AI分析的问题" @input="autoResize"
-          @keydown.enter.exact.prevent="handleSendMessage" />
-        <button type="button" class="send-btn" :disabled="!draftMessage.trim() || isStreaming"
-          @click="handleSendMessage">
-          <SendSVG size="24" color="currentColor" />
-        </button>
+        <!-- 图片预览区（有图片时显示） -->
+        <div v-if="imageList.length" class="image-preview-bar">
+          <div v-for="(item, idx) in imageList" :key="idx" class="image-thumb-wrap">
+            <img :src="item.dataUrl" :alt="item.name" class="image-thumb" />
+            <button type="button" class="image-remove-btn" @click="removeImage(idx)">×</button>
+          </div>
+          <span class="image-count">{{ imageList.length }}/3</span>
+        </div>
+        <div class="input-row">
+          <!-- 隐藏文件选择器 -->
+          <input
+            ref="fileInputRef"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            style="display:none"
+            @change="handleImageSelect"
+          />
+          <!-- 📎 上传图片按钮 -->
+          <button
+            type="button"
+            class="attach-btn"
+            :disabled="imageList.length >= 3 || isStreaming"
+            title="上传图片（最多3张）"
+            @click="fileInputRef.click()"
+          >📎</button>
+          <textarea ref="inputRef" v-model="draftMessage" rows="1"
+            :placeholder="imageList.length ? '可补充文字描述（直接发送将询问图片内容）' : '请输入症状、病史或希望AI分析的问题'"
+            @input="autoResize"
+            @keydown.enter.exact.prevent="handleSendMessage" />
+          <button type="button" class="send-btn"
+            :disabled="(!draftMessage.trim() && !imageList.length) || isStreaming"
+            @click="handleSendMessage">
+            <SendSVG size="24" color="currentColor" />
+          </button>
+        </div>
       </div>
     </div>
 
@@ -534,6 +626,14 @@ function getThinkingData(msgIndex) {
       :download-url="pdfPreviewState.downloadUrl"
       @close="pdfPreviewState.visible = false"
     />
+
+    <!-- 图片放大预览 -->
+    <Teleport to="body">
+      <div v-if="previewImgUrl" class="img-preview-backdrop" @click="closePreview">
+        <img :src="previewImgUrl" class="img-preview-full" alt="图片预览" @click.stop />
+        <button type="button" class="img-preview-close" @click="closePreview">×</button>
+      </div>
+    </Teleport>
 
     <div v-if="isMobileLayout && isSyncExpanded" class="sync-backdrop" @click="toggleSyncPanel"></div>
 
@@ -963,11 +1063,62 @@ function getThinkingData(msgIndex) {
   border-top: 1px solid var(--color-border);
   padding: 10px 16px;
   background: var(--color-bg-base);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 42px;
-  gap: 10px;
-  align-items: end;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   flex-shrink: 0;
+}
+
+/* 图片预览条 */
+.image-preview-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.image-thumb-wrap {
+  position: relative;
+  width: 56px;
+  height: 56px;
+}
+
+.image-thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+}
+
+.image-remove-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-text-muted, #888);
+  color: #fff;
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+}
+
+.image-count {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* 输入行：📎 + textarea + 发送按钮 */
+.input-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 42px;
+  gap: 8px;
+  align-items: end;
 
   textarea {
     border: none;
@@ -982,6 +1133,71 @@ function getThinkingData(msgIndex) {
     box-sizing: border-box;
     width: 100%;
   }
+}
+
+/* 用户消息气泡中的图片列表 */
+.msg-image-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.msg-image-thumb {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  cursor: zoom-in;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* 图片放大预览遮罩 */
+.img-preview-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  cursor: zoom-out;
+}
+
+.img-preview-full {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  cursor: default;
+}
+
+.img-preview-close {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  font-size: 32px;
+  color: #fff;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.attach-btn {
+  width: 36px;
+  height: 36px;
+  font-size: 18px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  &:hover { opacity: 1; }
+  &:disabled { opacity: 0.3; cursor: not-allowed; }
 }
 
 .send-btn {

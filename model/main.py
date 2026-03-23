@@ -19,6 +19,7 @@ from Agent.qwen.qwen_assistant import MedicalAssistant
 from utils.naming_model import NamingModel
 from makeData.Retrieve import UnifiedSearchEngine, CONFIG
 from config.config_loader import get_prompt_manager, get_report_manager
+from vision_service import VisionAnalysisService
 
 from langchain_community.chat_models import ChatTongyi
 from utils.context_summary import ConversationSummaryService
@@ -35,7 +36,7 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)]
 )
 
-resources = {"model": None, "naming_model": None, "executor": None, "context_summary": None}
+resources = {"model": None, "naming_model": None, "executor": None, "context_summary": None, "vision_service": None}
 
 
 class QueryRequest(BaseModel):
@@ -45,6 +46,7 @@ class QueryRequest(BaseModel):
     token: str
     report_mode: str = "emergency"
     show_thinking: bool = True  # 是否输出中间思考过程
+    images: list[str] = []  # Base64 图片列表（新增：影像识别功能），最多 3 张
 
 
 class AnalyzeRequest(BaseModel):
@@ -101,8 +103,11 @@ def init_all_resources():
         report_manager=report_mgr
     )
 
+    # 初始化影像分析服务（VL 模型懒加载，首次调用时连接 DashScope）
+    vision_service = VisionAnalysisService(prompt_manager=prompt_mgr)
+
     naming_model = NamingModel()
-    return agent, naming_model, context_summary
+    return agent, naming_model, context_summary, vision_service
 
 
 @asynccontextmanager
@@ -112,12 +117,13 @@ async def lifespan(app: FastAPI):
     loop = asyncio.get_running_loop()
 
     try:
-        agent, naming, context_summary = await loop.run_in_executor(
+        agent, naming, context_summary, vision_service = await loop.run_in_executor(
             resources["executor"], init_all_resources
         )
         resources["model"] = agent
         resources["naming_model"] = naming
         resources["context_summary"] = context_summary
+        resources["vision_service"] = vision_service
         logging.info(">>> 所有模型组装完成，服务已就绪")
     except Exception as e:
         logging.error(f"!!! 模型初始化严重失败: {e}")
@@ -156,9 +162,45 @@ async def get_model_result(request: QueryRequest):
             logging.info(f"请求all_info: {request.all_info}")
             logging.info(f"请求report_mode: {request.report_mode}")
             logging.info(f"请求show_thinking: {request.show_thinking}")
+            logging.info(f"请求图片数量: {len(request.images)}")
 
             loop = asyncio.get_running_loop()
             final_answer_parts = []
+
+            # ===== 影像识别分支：有图片时直接走 vision_service，跳过 Agent 推理 =====
+            if request.images:
+                vision_svc = resources.get("vision_service")
+                if not vision_svc:
+                    yield json.dumps({"type": "chunk", "content": "影像识别服务未就绪，请稍后重试。"}, ensure_ascii=False) + "\n"
+                else:
+                    async for event in vision_svc.analyze_stream(
+                        images=request.images,
+                        question=request.question,
+                        all_info=request.all_info,
+                    ):
+                        if event.get("type") == "thinking":
+                            yield json.dumps({
+                                "type": "thinking",
+                                "step": event.get("step", ""),
+                                "title": event.get("title", ""),
+                                "content": event.get("content", ""),
+                            }, ensure_ascii=False) + "\n"
+                        elif event.get("type") == "chunk":
+                            content_str = str(event.get("content", ""))
+                            if content_str:
+                                final_answer_parts.append(content_str)
+                                yield json.dumps({"type": "chunk", "content": content_str}, ensure_ascii=False) + "\n"
+
+                answer_text = "".join(final_answer_parts).strip()
+                yield json.dumps({
+                    "type": "done",
+                    "content": "",
+                    "result": answer_text,
+                    "summary": request.all_info,
+                    "name": "影像分析",
+                    "all_info": request.all_info,
+                }, ensure_ascii=False) + "\n"
+                return
 
             # 并行启动命名任务（首轮对话时生成会话标题，sync 函数放入线程池）
             naming_future = None

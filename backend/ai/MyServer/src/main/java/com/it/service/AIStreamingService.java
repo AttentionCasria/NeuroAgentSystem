@@ -12,8 +12,8 @@ public interface AIStreamingService {
     // 断线重连/获取当前流式缓存
     String getResumeContent(Long userId, Long talkId);
 
-    // 核心流式对话
-    Flux<String> streamChat(Long userId, Long talkId, String question, String token);
+    // 核心流式对话（images 为影像识别图片列表，无图片时传 null 或空列表）
+    Flux<String> streamChat(Long userId, Long talkId, String question, String token, List<String> images);
 
     // 获取历史对话内容 (从原 QuesService 迁移过来)
     List<String> getPreContent(Long userId, Long talkId);

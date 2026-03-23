@@ -282,13 +282,14 @@ function safeChunkToChars(chunk) {
   return Array.from(chunk)
 }
 
-async function handleSendMessage(text) {
+async function handleSendMessage({ text, images } = {}) {
   if (!text || isStreaming.value) return
 
   isStreaming.value = true
   isThinking.value = true   // 流开始前先进入 thinking 阶段
   thinkingHint.value = ''
-  currentTalkList.value.push(text)
+  // 有图片时存 { text, images } 对象，无图时仍存字符串（兼容历史消息）
+  currentTalkList.value.push(images && images.length ? { text, images } : text)
   currentTalkList.value.push('')
   const aiIndex = currentTalkList.value.length - 1
 
@@ -350,11 +351,13 @@ async function handleSendMessage(text) {
   }
 
   try {
+    // 构造请求参数，有图片时携带 images 列表（影像识别功能）
+    const imagesPayload = images && images.length ? { images } : {}
     const finalResult =
       currentTalkId.value === NEW_TALK_ID
-        ? await newChatStreamAPI({ question: text }, onChunk, onThinking)
+        ? await newChatStreamAPI({ question: text, ...imagesPayload }, onChunk, onThinking)
         : await sendQuestionStreamAPI(
-            { talkId: currentTalkId.value, question: text },
+            { talkId: currentTalkId.value, question: text, ...imagesPayload },
             onChunk,
             onThinking,
           )

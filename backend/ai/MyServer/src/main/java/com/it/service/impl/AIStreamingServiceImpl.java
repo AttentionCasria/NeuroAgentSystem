@@ -191,7 +191,8 @@ public class AIStreamingServiceImpl implements AIStreamingService {
     public Flux<String> streamChat(Long userId,
                                    Long talkId,
                                    String question,
-                                   String token) {
+                                   String token,
+                                   List<String> images) {
 
         if (userId == null) {
             return Flux.just(buildError("未登录"));
@@ -222,6 +223,24 @@ public class AIStreamingServiceImpl implements AIStreamingService {
         final String reportMode = DEFAULT_REPORT_MODE;
         final boolean showThinking = DEFAULT_SHOW_THINKING;
 
+        // 图片校验：最多 3 张，单张 Base64 解码后不超过 10MB
+        if (images != null && !images.isEmpty()) {
+            if (images.size() > 3) {
+                return Flux.just(buildError("最多上传 3 张图片"));
+            }
+            for (String img : images) {
+                try {
+                    String raw = img.contains(",") ? img.split(",", 2)[1] : img;
+                    byte[] bytes = java.util.Base64.getDecoder().decode(raw);
+                    if (bytes.length > 10 * 1024 * 1024) {
+                        return Flux.just(buildError("单张图片不得超过 10MB"));
+                    }
+                } catch (Exception e) {
+                    return Flux.just(buildError("图片格式非法，请使用 Base64 编码"));
+                }
+            }
+        }
+
         Map<String, Object> request = new HashMap<>();
         request.put("question", question);
         request.put("round", 2);
@@ -229,6 +248,10 @@ public class AIStreamingServiceImpl implements AIStreamingService {
         request.put("token", requestToken);
         request.put("report_mode", reportMode);
         request.put("show_thinking", showThinking);
+        // 影像识别：有图片时传入 images 列表，Python 层据此走 vision 分支
+        if (images != null && !images.isEmpty()) {
+            request.put("images", images);
+        }
 
         StringBuilder fullAnswer = new StringBuilder();
         final String[] generatedTitle = {null};

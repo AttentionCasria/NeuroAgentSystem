@@ -37,6 +37,9 @@ spring:
           max-wait: 3000ms
           time-between-eviction-runs: 10s
 
+  codec:
+    max-in-memory-size: 50MB   # 影像识别：支持最多 3 张 Base64 图片（约 15-20MB）
+
   jackson:
     default-property-inclusion: non_null
     time-zone: Asia/Shanghai
