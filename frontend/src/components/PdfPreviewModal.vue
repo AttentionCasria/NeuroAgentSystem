@@ -32,9 +32,9 @@ watch(() => props.visible, (val) => {
   }
 })
 
-function onRendered(pageCount) {
-  // vue-pdf-embed v2 在渲染完成后触发 loaded 事件，附带总页数
-  totalPages.value = pageCount
+function onRendered(pdf) {
+  // vue-pdf-embed v2 的 loaded 事件传入的是 PDF 文档对象，总页数通过 numPages 取得
+  totalPages.value = pdf?.numPages ?? 0
   loading.value = false
 }
 
