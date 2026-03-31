@@ -70,10 +70,14 @@ class MedicalAssistant:
                     logger.error(f"子问题检索失败: {q} | {e}")
                     results[q] = ""
 
+        # 按子问题独立截断后再合并，避免整体截断时中间维度被完全丢弃
+        from Agent.qwen.qwen_agent import MAX_EVIDENCE_PER_QUESTION
         parts = []
         for i, q in enumerate(sub_questions):
             r = results.get(q, "")
             if r:
+                if len(r) > MAX_EVIDENCE_PER_QUESTION:
+                    r = r[:MAX_EVIDENCE_PER_QUESTION] + "... [已截断]"
                 parts.append(f"### 检索维度{i+1}: {q}\n{r}")
 
         combined = "\n\n---\n\n".join(parts)

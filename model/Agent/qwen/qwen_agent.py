@@ -16,7 +16,8 @@ from token_aggregator import TokenAggregator
 logger = logging.getLogger(__name__)
 
 MAX_SUB_QUESTIONS = 3
-MAX_EVIDENCE_CHARS = 800
+MAX_EVIDENCE_CHARS = 2000   # 提升上限：3子问题×600 + headers ≈ 1900，留余量
+MAX_EVIDENCE_PER_QUESTION = 600  # 每个子问题的证据独立截断上限
 MAX_PROPOSAL_CHARS = 3000
 MAX_CRITIQUE_CHARS = 3000
 
