@@ -1,7 +1,4 @@
-"""
-临时测试脚本：直接调用 qwenAgent，验证 consultation 路径是否能跑通
-运行方式：cd /www/wwwroot/Python-backend && python3 test_consultation.py
-"""
+
 import asyncio
 import logging
 import os

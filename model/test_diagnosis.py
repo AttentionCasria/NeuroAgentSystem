@@ -1,13 +1,4 @@
-"""
-诊断脚本：逐层排查 consultation 卡死根因
-运行方式：cd /www/wwwroot/Python-backend && python3 test_diagnosis.py
 
-测试顺序：
-  Case 1 — 单次 ainvoke（验证 DashScope 本身是否正常）
-  Case 2 — 两次并行 ainvoke，不经过 LangGraph（验证 asyncio.gather 是否正常）
-  Case 3 — 直接调用 _parallel_propose_and_critique，不经过 LangGraph（验证三步推理本身）
-  Case 4 — 通过 run_clinical_reasoning 完整跑（经过 LangGraph astream_events）
-"""
 import asyncio
 import logging
 import os
@@ -41,9 +32,7 @@ def make_llms():
     return llm_max, llm_plus, llm_turbo
 
 
-# ─────────────────────────────────────────────────────────
-# Case 1：单次 ainvoke，验证 DashScope 连通性和响应速度
-# ─────────────────────────────────────────────────────────
+
 async def case1_single_ainvoke():
     logger.info("=" * 60)
     logger.info("Case 1：单次 ainvoke（qwen-plus，短提示）")
@@ -57,9 +46,7 @@ async def case1_single_ainvoke():
     return True
 
 
-# ─────────────────────────────────────────────────────────
-# Case 2：两次 ainvoke 并行 gather，不经过 LangGraph
-# ─────────────────────────────────────────────────────────
+
 async def case2_parallel_gather():
     logger.info("=" * 60)
     logger.info("Case 2：两次并行 ainvoke（qwen-max，不经过 LangGraph）")
@@ -81,9 +68,7 @@ async def case2_parallel_gather():
     return True
 
 
-# ─────────────────────────────────────────────────────────
-# Case 3：直接调用 _parallel_propose_and_critique，不经过 LangGraph
-# ─────────────────────────────────────────────────────────
+
 async def case3_direct_propose_critique():
     logger.info("=" * 60)
     logger.info("Case 3：直接调用 _parallel_propose_and_critique（不经过 LangGraph）")
@@ -128,9 +113,7 @@ async def case3_direct_propose_critique():
     return True
 
 
-# ─────────────────────────────────────────────────────────
-# Case 4：完整走 run_clinical_reasoning（经过 LangGraph astream_events）
-# ─────────────────────────────────────────────────────────
+
 async def case4_full_langgraph():
     logger.info("=" * 60)
     logger.info("Case 4：完整 run_clinical_reasoning（经过 LangGraph astream_events）")
@@ -175,9 +158,6 @@ async def case4_full_langgraph():
     return True
 
 
-# ─────────────────────────────────────────────────────────
-# 主流程：逐 Case 执行，某个失败/卡死直接可以 Ctrl+C 定位
-# ─────────────────────────────────────────────────────────
 async def main():
     cases = [
         ("Case 1 - 单次 ainvoke",            case1_single_ainvoke),

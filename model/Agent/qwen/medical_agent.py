@@ -20,7 +20,6 @@ class MedicalReActAgent:
 每行一个，必须使用中文医学术语，不要解释。
 临床问题：{question}"""
 
-    # 【修改点4】优先提取AHA/ASA指南推荐等级
     _FALLBACK_EVIDENCE_PROMPT = """你是循证医学证据整理专家。
 临床问题：{question}
 检索文献：{evidence}
@@ -38,12 +37,8 @@ class MedicalReActAgent:
         self.retriever = retriever
         self.prompts = prompt_manager
 
-    # ============================
-    # 极速模式：直接检索，0 次 LLM
-    # ============================
 
     def fast_retrieve(self, question: str) -> str:
-        """直接用问题文本检索，不经过LLM。"""
         try:
             t0 = time.time()
             logger.info(f"📋 [MedicalAgent] 快速检索: {question[:60]}...")
@@ -51,12 +46,10 @@ class MedicalReActAgent:
             top_k = CONFIG.get("top_k_final", 3)
             search_query = question
 
-            # 【修改点4】优先拉取最新指南
             if "指南" in question or "AHA" in question or "ASA" in question:
-                top_k = 5  # 多拉几条
+                top_k = 5
                 search_query = question + " 2023 2026 AHA/ASA 中国卒中指南"
 
-            # 带重试的检索（应对 rerank rate limit）
             docs = self._search_with_retry(search_query, top_k)
 
             if not docs:
@@ -81,7 +74,6 @@ class MedicalReActAgent:
                     f"(相关度:{score})"
                 )
 
-                # 限制每条文档长度，减少总 token
                 content = doc.page_content[:400]
                 results.append(
                     f"【文献{i+1}】[来源: 《{source}》 p.{page}] "
@@ -95,7 +87,6 @@ class MedicalReActAgent:
             return ""
 
     def _search_with_retry(self, query, top_k, max_retries=2):
-        """带重试的检索，应对 rerank API rate limit"""
         for attempt in range(max_retries + 1):
             try:
                 return self.retriever.search(query, top_k)
@@ -110,13 +101,9 @@ class MedicalReActAgent:
                         )
                         time.sleep(wait)
                         continue
-                # 非限流错误或重试耗尽
                 raise
         return []
 
-    # ============================
-    # 完整模式（保留）
-    # ============================
 
     def run(self, question: str) -> str:
         try:
@@ -213,7 +200,6 @@ class MedicalReActAgent:
             prompt_text = self._FALLBACK_EVIDENCE_PROMPT.format(
                 question=question, evidence=evidence
             )
-        # 证据合成为中间步骤，结果传给后续节点处理，llm_fast（qwen-plus）足够
         resp = self.llm_fast.invoke([
             SystemMessage(content="你是循证医学专家。请用中文回答。"),
             HumanMessage(content=prompt_text)

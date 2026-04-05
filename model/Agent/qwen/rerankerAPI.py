@@ -1,4 +1,3 @@
-# rerankerAPI.py — 无变化
 import logging
 import requests
 from typing import List, Tuple

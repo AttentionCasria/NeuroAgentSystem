@@ -1,6 +1,3 @@
-# vision_service.py — 多模态影像分析服务
-# 直接使用 dashscope.MultiModalConversation 原生 SDK，规避旧版 langchain-community 不支持多模态的问题
-# 用 threading + asyncio.Queue 将同步流式迭代器桥接为异步生成器
 
 import asyncio
 import logging
@@ -12,26 +9,21 @@ from dashscope import MultiModalConversation
 
 logger = logging.getLogger(__name__)
 
-# 图片意图分类关键词（规则快速判断，不消耗 LLM token）
 _KEYWORDS_REPORT = ["报告", "化验", "检验", "检查", "验血", "血常规", "尿常规", "生化", "结果单", "单子"]
 _KEYWORDS_DRUG = ["药", "药品", "药物", "什么药", "药盒", "说明书", "处方", "片", "胶囊", "药名"]
 
-# 哨兵对象，用于标记流结束
 _STREAM_DONE = object()
 
 
 class VisionAnalysisService:
-    """多模态影像分析服务：封装 Qwen VL 模型调用，yield 与现有 SSE 格式完全兼容的事件字典"""
 
     def __init__(self, prompt_manager):
         self.prompt_manager = prompt_manager
-        # 从环境变量读取 API Key（与项目其他模块一致）
         self._api_key = os.getenv("DASHSCOPE_API_KEY")
         if not self._api_key:
             logger.warning("⚠️ 未找到 DASHSCOPE_API_KEY，影像分析功能将不可用")
 
     def _detect_image_type(self, question: str) -> str:
-        """根据用户文字描述，通过关键词快速判断图片类型"""
         q = question.lower()
         if any(kw in q for kw in _KEYWORDS_REPORT):
             return "image_report"
@@ -47,12 +39,6 @@ class VisionAnalysisService:
         system_text: str,
         user_prefix: str,
     ) -> list:
-        """
-        构造 dashscope MultiModalConversation 消息格式：
-        - system: [{"text": "..."}]
-        - user:   [{"image": "data:..."}, ..., {"text": "..."}]
-        注意：dashscope 的图片 key 是 "image"，不是 "image_url"
-        """
         messages = []
 
         if system_text and system_text.strip():
@@ -63,11 +49,9 @@ class VisionAnalysisService:
 
         user_content = []
         for img in images:
-            # 确保携带 data URL 前缀
             url = img if img.startswith("data:") else f"data:image/jpeg;base64,{img}"
             user_content.append({"image": url})
 
-        # 文字部分：患者上下文 + 任务前缀 + 用户问题
         patient_context = f"患者信息：{all_info.strip()}" if all_info and all_info.strip() else ""
         user_text = "\n\n".join(filter(None, [patient_context, user_prefix, question])).strip()
         user_content.append({"text": user_text})
@@ -76,10 +60,6 @@ class VisionAnalysisService:
         return messages
 
     def _run_sync_stream(self, messages: list, queue: asyncio.Queue, loop: asyncio.AbstractEventLoop):
-        """
-        在子线程中执行 dashscope 同步流式调用，
-        通过 asyncio.run_coroutine_threadsafe 将结果放入异步队列
-        """
         def put(item):
             asyncio.run_coroutine_threadsafe(queue.put(item), loop)
 
@@ -89,7 +69,7 @@ class VisionAnalysisService:
                 api_key=self._api_key,
                 messages=messages,
                 stream=True,
-                incremental_output=True,  # 增量输出，每次只返回新增文字
+                incremental_output=True,
             )
             for chunk in response:
                 if chunk.status_code != 200:
@@ -102,7 +82,6 @@ class VisionAnalysisService:
                         if text:
                             put(text)
                 except (AttributeError, IndexError, KeyError):
-                    # chunk 格式异常，跳过不中断流
                     continue
 
         except Exception as e:
@@ -113,11 +92,9 @@ class VisionAnalysisService:
     async def analyze_stream(
         self, images: List[str], question: str, all_info: str
     ) -> AsyncGenerator[dict, None]:
-        """流式分析图片，yield 与现有 thinking/chunk SSE 事件格式兼容的字典"""
         image_type = self._detect_image_type(question)
         logger.info(f"影像分析意图: {image_type}，图片数量: {len(images)}")
 
-        # 从 prompt_manager 取模板，不存在则用内置兜底
         if image_type == "image_report":
             system_text = self.prompt_manager.get("image_report_system") or _DEFAULT_REPORT_SYSTEM
             user_prefix = "请分析以下检验报告单图片。"
@@ -128,7 +105,6 @@ class VisionAnalysisService:
             system_text = self.prompt_manager.get("image_general_system") or _DEFAULT_GENERAL_SYSTEM
             user_prefix = "请分析以下图片。"
 
-        # 先发 thinking 事件，消除空白等待期
         yield {
             "type": "thinking",
             "step": "Vision",
@@ -138,7 +114,6 @@ class VisionAnalysisService:
 
         messages = self._build_messages(images, question, all_info, system_text, user_prefix)
 
-        # 用 asyncio.Queue 桥接同步迭代器与异步生成器
         loop = asyncio.get_running_loop()
         queue: asyncio.Queue = asyncio.Queue()
 
@@ -149,7 +124,6 @@ class VisionAnalysisService:
         )
         t.start()
 
-        # 从队列中消费结果，直到收到哨兵或异常
         while True:
             item = await queue.get()
             if item is _STREAM_DONE:
@@ -159,9 +133,6 @@ class VisionAnalysisService:
                 yield {"type": "chunk", "content": f"图片分析失败，请稍后重试。（{type(item).__name__}: {item}）"}
                 break
             yield {"type": "chunk", "content": item}
-
-
-# ===== 内置兜底 Prompt（prompts.yaml 无对应 key 时使用）=====
 
 _DEFAULT_REPORT_SYSTEM = """\
 你是一位三甲医院神经内科主任医师，正在阅读患者的检验报告单照片。

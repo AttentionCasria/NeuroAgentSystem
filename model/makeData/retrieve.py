@@ -1,4 +1,3 @@
-# makeData/Retrieve.py — 优化版：空文档安全 + 检索缓存 + 配置优化
 
 import logging
 import os
@@ -15,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 
 class DashScopeEmbeddings(Embeddings):
-    """直接调用 dashscope.TextEmbedding SDK，绕过 openai v2.x 格式变更问题"""
 
     def __init__(self, model: str = "text-embedding-v2"):
         self.model = model
@@ -49,9 +47,6 @@ class DashScopeEmbeddings(Embeddings):
         else:
             raise ValueError(f"DashScope embedding 失败: {resp.code} - {resp.message}")
 
-# ==========================================
-# 配置
-# ==========================================
 CONFIG = {
     "persist_dir": "./chroma_db_unified",
     "docs_dir": "./docs",
@@ -60,10 +55,6 @@ CONFIG = {
     "use_reranker": True,
     "reranker_initial_k": 8,
 }
-
-# ==========================================
-# 工具函数
-# ==========================================
 
 def clean_text(text: str) -> str:
     text = text.replace("\n", "").replace(" ", "")
@@ -119,10 +110,6 @@ def split_documents(documents):
     return splitter.split_documents(documents)
 
 
-# ==========================================
-# Reranker
-# ==========================================
-
 class BGEReranker:
     def __init__(self, top_k: int = 5):
         self.api_key = os.getenv("DASHSCOPE_API_KEY")
@@ -160,17 +147,11 @@ class BGEReranker:
             return docs[:self.top_k]
 
 
-# ==========================================
-# VectorStore
-# ==========================================
-
 from langchain_chroma import Chroma
 
 
 def build_or_load_vectorstore(chunks, persist_dir: str):
     logger.info(f"🔌 [VectorStore] 连接: {persist_dir}")
-    # DashScope OpenAI 兼容模式提供 text-embedding-v2，替代已与 langchain-core 1.x
-    # 不兼容的 langchain_dashscope.DashScopeEmbeddings
     embeddings = DashScopeEmbeddings(model="text-embedding-v2")
     vectordb = Chroma(
         persist_directory=persist_dir,
@@ -194,11 +175,6 @@ def build_or_load_vectorstore(chunks, persist_dir: str):
         logger.warning(f"⚠️ 检查向量库状态异常: {e}")
     return vectordb
 
-
-# ==========================================
-# 带缓存的混合检索器
-# ==========================================
-
 from langchain_community.retrievers import BM25Retriever
 
 
@@ -214,7 +190,6 @@ class HybridRetriever:
             self.bm25 = None
             logger.warning("⚠️ [HybridRetriever] 文档为空，BM25 未初始化")
 
-        # {cache_key: (result, timestamp)}，TTL 300s 避免跨患者上下文污染
         self._cache: dict = {}
         self._cache_ttl = 300
 
@@ -225,7 +200,6 @@ class HybridRetriever:
             if time.time() - ts < self._cache_ttl:
                 logger.info(f"⚡ [Cache Hit] 跳过重复检索: {query[:50]}...")
                 return result
-            # 缓存过期，删除旧记录
             del self._cache[cache_key]
 
         logger.info(f"🔍 [HybridRetriever] 检索: {query[:60]}...")
@@ -257,10 +231,6 @@ class HybridRetriever:
         if count > 0:
             logger.info(f"🗑️ [HybridRetriever] 清空 {count} 条检索缓存")
 
-
-# ==========================================
-# 统一搜索引擎
-# ==========================================
 
 class UnifiedSearchEngine:
     def __init__(self, persist_dir: str, top_k: int, docs_dir=None):

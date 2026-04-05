@@ -1,4 +1,3 @@
-# config/config_loader.py — 配置加载器（修复版：增强调试 + 容错）
 
 import os
 import yaml
@@ -16,7 +15,6 @@ def _load_yaml(filename: str) -> Dict[str, Any]:
 
     if not os.path.exists(filepath):
         logger.error(f"❌ 配置文件不存在: {filepath}")
-        # 列出目录内容帮助调试
         try:
             files = os.listdir(CONFIG_DIR)
             logger.info(f"   config/ 目录内容: {files}")
@@ -28,7 +26,6 @@ def _load_yaml(filename: str) -> Dict[str, Any]:
         with open(filepath, "r", encoding="utf-8") as f:
             raw = f.read()
 
-        # 调试：打印文件大小
         logger.info(f"   文件大小: {len(raw)} 字节")
 
         data = yaml.safe_load(raw)
@@ -38,7 +35,6 @@ def _load_yaml(filename: str) -> Dict[str, Any]:
             logger.info(f"✅ 已加载配置: {filename} ({len(keys)} 个 key)")
             logger.info(f"   所有 key: {keys}")
 
-            # 检查每个 key 是否有有效值
             for k, v in data.items():
                 if v is None or (isinstance(v, str) and not v.strip()):
                     logger.warning(f"   ⚠️ key '{k}' 的值为空!")
@@ -50,7 +46,6 @@ def _load_yaml(filename: str) -> Dict[str, Any]:
 
     except yaml.YAMLError as e:
         logger.error(f"❌ YAML 解析失败 {filename}: {e}")
-        # 尝试定位出错位置
         if hasattr(e, 'problem_mark'):
             mark = e.problem_mark
             logger.error(
@@ -69,10 +64,6 @@ class PromptManager:
             logger.warning("⚠️ Prompt 配置为空，所有调用将使用内置 fallback")
 
     def get(self, key: str, **kwargs) -> Optional[str]:
-        """
-        获取 Prompt 并填充变量。
-        返回 None 表示 key 不存在，调用方应使用 fallback。
-        """
         template = self._prompts.get(key)
 
         if template is None:
@@ -138,23 +129,18 @@ class ReportTemplateManager:
         return list(self._templates.keys())
 
     def update_doc_list(self, doc_names: list) -> None:
-        """用本地/OSS 实际文件名替换 system_role 中的硬编码文献列表。
-        若正则未能定位列表区域（例如 YAML 格式改变），保持静态列表不变。
-        """
         import re
         if not doc_names:
             logger.warning("[文献列表] 传入文件名为空，保持静态列表")
             return
 
         new_list_text = "\n".join(f"- {name}" for name in sorted(set(doc_names)))
-        # 匹配"严禁自行创造..."到"如需引用"之间的所有 "- ..." 条目
         pattern = r"(严禁自行创造[^\n]*\n)((?:- [^\n]*\n)+)(如需引用)"
         new_role, n = re.subn(pattern, rf"\g<1>{new_list_text}\n\g<3>", self._system_role)
         if n:
             self._system_role = new_role
             logger.info(f"[文献列表] 动态更新成功，共 {len(doc_names)} 篇: {doc_names}")
         else:
-            # 正则定位失败（YAML格式变更等），末尾追加明确覆盖语句作为兜底
             fallback_inject = (
                 f"\n\n【本次服务实际加载文献，引用时只能使用以下名称】\n"
                 f"{new_list_text}\n"

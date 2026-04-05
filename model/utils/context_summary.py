@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 from langchain_core.output_parsers import StrOutputParser
 
 load_dotenv()
-# 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -145,7 +144,6 @@ class ConversationSummaryService:
             return "\n".join(parts).strip()
 
         try:
-            # 使用 StrOutputParser 链，直接获取字符串输出
             chain = self.llm | StrOutputParser()
             merged = chain.invoke(prompt).strip()
             return merged or previous_all_info

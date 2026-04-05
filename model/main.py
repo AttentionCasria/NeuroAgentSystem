@@ -1,4 +1,3 @@
-# main.py
 
 import logging
 import sys
@@ -47,8 +46,8 @@ class QueryRequest(BaseModel):
     all_info: str = ""
     token: str
     report_mode: str = "emergency"
-    show_thinking: bool = True  # 是否输出中间思考过程
-    images: list[str] = []  # Base64 图片列表（新增：影像识别功能），最多 3 张
+    show_thinking: bool = True
+    images: list[str] = []
 
 
 class AnalyzeRequest(BaseModel):
@@ -77,17 +76,12 @@ def init_all_resources():
     report_mgr = get_report_manager()
     logging.info(f">>> 可用报告模式: {report_mgr.list_modes()}")
 
-    # DashScope OpenAI 兼容模式：与 langchain_openai.ChatOpenAI 直接对接，
-    # 替代已与 langchain-core 1.x 不兼容的 langchain_dashscope.ChatTongyi
     _dashscope_base = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     _dashscope_key  = os.getenv("DASHSCOPE_API_KEY")
-    # 显式关闭 thinking 模式：Qwen3 系列默认开启 thinking，会在正式回答前生成大量
-    # 不可见的思维链 token，导致响应时间大幅增加。全部关闭后速度大幅提升。
     _no_thinking = {"extra_body": {"enable_thinking": False}}
     llm_max   = ChatOpenAI(model="qwen-max",   base_url=_dashscope_base, api_key=_dashscope_key, model_kwargs=_no_thinking)
     llm_plus  = ChatOpenAI(model="qwen-plus",  base_url=_dashscope_base, api_key=_dashscope_key, model_kwargs=_no_thinking)
     llm_turbo = ChatOpenAI(model="qwen-turbo", base_url=_dashscope_base, api_key=_dashscope_key, model_kwargs=_no_thinking)
-    # 对话摘要用 turbo：摘要压缩任务，不需要复杂推理
     context_summary = ConversationSummaryService(
         llm=llm_turbo,
         prompt_manager=prompt_mgr
@@ -98,8 +92,6 @@ def init_all_resources():
         top_k=CONFIG.get("top_k_final", 3)
     )
 
-    # 从本地已加载的 PDF 文件名动态更新 system_role 中的文献列表
-    # 确保 AI 只引用本地文档库中实际存在的文件名，消除硬编码列表与 OSS 不同步的问题
     if retriever.chunks:
         _loaded_doc_names = sorted(set(
             chunk.metadata["source"].removesuffix(".pdf").removesuffix(".PDF")
@@ -127,7 +119,6 @@ def init_all_resources():
         llm_turbo=llm_turbo,
     )
 
-    # 初始化影像分析服务（VL 模型懒加载，首次调用时连接 DashScope）
     vision_service = VisionAnalysisService(prompt_manager=prompt_mgr)
 
     naming_model = NamingModel()
@@ -180,7 +171,6 @@ async def get_model_result(request: QueryRequest):
         raise HTTPException(status_code=503, detail="Model service not ready")
 
     async def generate():
-        # 每次请求生成唯一 ID，贯穿本次流的所有日志
         req_id = uuid.uuid4().hex[:12]
         try:
             logging.info(f"[{req_id}] === 开始处理请求 ===")
@@ -190,7 +180,6 @@ async def get_model_result(request: QueryRequest):
             loop = asyncio.get_running_loop()
             final_answer_parts = []
 
-            # ── 影像识别分支（有图片时直接走 vision_service，跳过 Agent 推理）────
             if request.images:
                 vision_svc = resources.get("vision_service")
                 if not vision_svc:
@@ -222,7 +211,6 @@ async def get_model_result(request: QueryRequest):
                 }, ensure_ascii=False)
                 return
 
-            # ── 并行启动命名任务（首轮对话时生成会话标题）────────────────────────
             naming_future = None
             if not request.all_info and resources.get("naming_model"):
                 naming_future = loop.run_in_executor(
@@ -231,7 +219,6 @@ async def get_model_result(request: QueryRequest):
                     request.question,
                 )
 
-            # ── 主推理流（sse-starlette 的 ping_interval 负责保活，无需手动心跳）──
             async for event in resources["model"].run_clinical_reasoning(
                 case_text=request.question,
                 all_info=request.all_info,
@@ -252,7 +239,6 @@ async def get_model_result(request: QueryRequest):
 
                 yield json.dumps(event, ensure_ascii=False)
 
-            # ── 流结束：等待命名 + 更新 all_info + 发送 done ─────────────────────
             generated_name = "咨询"
             if naming_future:
                 try:
@@ -289,8 +275,6 @@ async def get_model_result(request: QueryRequest):
             logging.error(f"[{req_id}] generate() 外层异常 | {format_error_log(e)}")
             yield json.dumps(build_error_event(e, talk_id=None), ensure_ascii=False)
 
-    # sse-starlette 的 ping_interval 每 15 秒发送 SSE 注释心跳（": ping\n\n"），
-    # 替代原来的 asyncio.wait 业务层心跳，Java WebFlux 过滤掉该注释帧即可
     return EventSourceResponse(generate(), ping=15)
 
 
@@ -310,7 +294,6 @@ async def analyze_patient_health_risk(request: AnalyzeRequest):
     logging.info(f"data: {patient_text[:200]}")
     logging.info(f"all_info: {request.all_info[:200] if request.all_info else ''}")
 
-    # 修改为调用新的快速专用函数（完全独立，不影响对话路径）
     result = await resources["model"].analyze_patient_risk_fast(patient_text)
 
     return {
@@ -327,10 +310,6 @@ class PubMedSearchRequest(BaseModel):
 
 @app.post("/model/pubmed/search")
 async def pubmed_search(request: PubMedSearchRequest):
-    """
-    PubMed 独立检索接口，供「医生学习 - 学习资料」板块调用。
-    与 AI 问答管线解耦，直接返回 JSON，不走 SSE 流。
-    """
     query = request.query.strip()
     if not query:
         return {"code": 1, "msg": "success", "data": {"papers": []}}

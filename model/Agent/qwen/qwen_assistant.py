@@ -1,4 +1,3 @@
-# Agent/qwen/qwenAssistant.py — 极速版 v2
 
 import logging
 import json
@@ -43,9 +42,6 @@ class MedicalAssistant:
 
         logger.info("✅ MedicalAssistant（极速版 v2）初始化完成")
 
-    # =========================================================
-    # 极速并行检索（0 次 LLM）
-    # =========================================================
 
     def fast_parallel_retrieve(self, sub_questions: List[str]) -> str:
         if not sub_questions:
@@ -70,7 +66,6 @@ class MedicalAssistant:
                     logger.error(f"子问题检索失败: {q} | {e}")
                     results[q] = ""
 
-        # 按子问题独立截断后再合并，避免整体截断时中间维度被完全丢弃
         from Agent.qwen.qwen_agent import MAX_EVIDENCE_PER_QUESTION
         parts = []
         for i, q in enumerate(sub_questions):
@@ -83,10 +78,6 @@ class MedicalAssistant:
         combined = "\n\n---\n\n".join(parts)
         logger.info(f"🔍 检索完成，总长度: {len(combined)} 字符")
         return combined
-
-    # =========================================================
-    # 完整版（保留）
-    # =========================================================
 
     def parallel_retrieve_and_synthesize(
         self, sub_questions: List[str]
@@ -116,10 +107,6 @@ class MedicalAssistant:
                 f"### 检索维度{i+1}: {q}\n{results.get(q, '未检索到')}"
             )
         return "\n\n---\n\n".join(parts)
-
-    # =========================================================
-    # 快速通道
-    # =========================================================
 
     async def stream_fast_response(
         self, case_text: str, evidence: str = ""
@@ -155,10 +142,6 @@ class MedicalAssistant:
         except Exception as e:
             logger.exception("❌ 快速通道响应失败")
             yield "⚠️ 系统异常，请结合临床独立判断。"
-
-    # =========================================================
-    # 流式生成最终报告
-    # =========================================================
 
     async def stream_final_report(
         self,

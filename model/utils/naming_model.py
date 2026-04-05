@@ -7,7 +7,6 @@ from langchain_openai import ChatOpenAI
 
 
 load_dotenv()
-# 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -17,7 +16,6 @@ class NamingModel(object):
         api_key = os.environ.get("DEEPSEEK-API-KEY")
         if not api_key:
             raise ValueError("未找到环境变量 DEEPSEEK-API-KEY，请设置该环境变量")
-        # 使用更快的模型：deepseek-chat
         self.llm = ChatOpenAI(
             model="deepseek-chat",
             base_url="https://api.deepseek.com/v1",

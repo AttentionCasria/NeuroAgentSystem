@@ -1,21 +1,4 @@
-#!/usr/bin/env python3
-# expand_contexts_resume.py
-"""
-Stream-expand 'contexts' column from an input CSV into one row per context,
-with checkpointing to allow resume after interruption.
 
-Usage:
-    python expand_contexts_resume.py input.csv --out contexts_expanded.csv --contexts_col contexts --resume True
-
-Key options:
-  --resume / --no-resume       : whether to resume from checkpoint (default: True)
-  --checkpoint-file PATH       : checkpoint JSON path (default: <out>.checkpoint.json)
-  --checkpoint-interval N      : save checkpoint every N input rows processed (default: 100)
-  --force-restart              : ignore existing checkpoint and output, start fresh
-  --contexts-col NAME          : name of contexts column in input (default: "contexts")
-  --keep-empty                 : keep rows with no contexts (context_idx = -1)
-  --encoding ENCODING          : file encoding (default utf-8-sig)
-"""
 from typing import Any, List, Tuple
 import csv
 import json
@@ -40,20 +23,17 @@ def safe_text(x: Any) -> str:
         return ""
 
 def parse_contexts_field(raw: Any) -> List[Any]:
-    """Robustly parse a 'contexts' cell into a Python list."""
     if raw is None:
         return []
     if isinstance(raw, list):
         return raw
     if isinstance(raw, tuple):
         return list(raw)
-    # pandas sometimes gives float('nan') when reading; handle numeric nan
     if isinstance(raw, float):
         return []
     s = safe_text(raw).strip()
     if s == "":
         return []
-    # Try JSON
     try:
         parsed = json.loads(s)
         if isinstance(parsed, list):
@@ -62,7 +42,6 @@ def parse_contexts_field(raw: Any) -> List[Any]:
             return [parsed]
     except Exception:
         pass
-    # Try python literal eval (e.g., "['a','b']" or list of dicts)
     try:
         parsed = ast.literal_eval(s)
         if isinstance(parsed, (list, tuple)):
@@ -71,32 +50,26 @@ def parse_contexts_field(raw: Any) -> List[Any]:
             return [parsed]
     except Exception:
         pass
-    # Try splitting by common separators (if looks like multiple items)
     separators = ["|||", "\n---\n", "\n\n", ";;;"]
     for sep in separators:
         if sep in s:
             parts = [p.strip() for p in s.split(sep) if p.strip()]
             if len(parts) > 1:
                 return parts
-    # Fallback: treat whole string as single context
     return [s]
 
 def extract_context_source(ctx_item: Any) -> Tuple[str, str]:
-    """Return (text, source) from a context item (dict or string)."""
     if isinstance(ctx_item, dict):
-        # common fields for content
         text_parts = []
         for k in ("content", "text", "page_content", "snippet", "body"):
             if k in ctx_item and ctx_item[k]:
                 text_parts.append(safe_text(ctx_item[k]))
         text = "\n".join(text_parts) if text_parts else json.dumps(ctx_item, ensure_ascii=False)
-        # find source
         src = ""
         for k in POSSIBLE_SOURCE_KEYS:
             if k in ctx_item and ctx_item[k]:
                 src = safe_text(ctx_item[k])
                 break
-        # nested metadata
         if not src:
             for k in ("meta", "metadata"):
                 if k in ctx_item and isinstance(ctx_item[k], dict):
@@ -131,7 +104,6 @@ def save_checkpoint(path: str, next_row: int):
     atomic_write_json(path, data)
 
 def ensure_output_header(out_path: str, fieldnames: List[str], encoding: str = "utf-8-sig"):
-    """Create output file with header if not exists."""
     exists = os.path.exists(out_path)
     if not exists:
         with open(out_path, "w", newline="", encoding=encoding) as f:
@@ -139,7 +111,6 @@ def ensure_output_header(out_path: str, fieldnames: List[str], encoding: str = "
             writer.writeheader()
 
 def append_rows(out_path: str, rows: List[dict], fieldnames: List[str], encoding: str = "utf-8-sig"):
-    """Append rows to CSV, writing header if file absent."""
     first = not os.path.exists(out_path)
     with open(out_path, "a", newline="", encoding=encoding) as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -156,10 +127,8 @@ def process_stream(input_csv: str, out_csv: str, contexts_col: str = "contexts",
         checkpoint_file = out_csv + ".checkpoint.json"
 
     if force_restart:
-        # remove checkpoint and optionally remove output to start fresh
         if os.path.exists(checkpoint_file):
             os.remove(checkpoint_file)
-        # remove output if exists to avoid mixing old results
         if os.path.exists(out_csv):
             print(f"[INFO] force_restart: removing existing output {out_csv}")
             os.remove(out_csv)
@@ -173,24 +142,21 @@ def process_stream(input_csv: str, out_csv: str, contexts_col: str = "contexts",
         else:
             print("[INFO] No checkpoint found or invalid; starting from row 0")
 
-    # Prepare header for output
     out_fields = ["sample_idx", "question", "answer", "ground_truth", "context_idx", "context_text", "context_source"]
     ensure_output_header(out_csv, out_fields, encoding=encoding)
 
     total_processed = 0
     last_saved_row = start_row
-    current_input_idx = -1  # will increment before processing row
+    current_input_idx = -1
     try:
         with open(input_csv, newline="", encoding=encoding) as csvfile:
             reader = csv.DictReader(csvfile)
             # Validate contexts_col
             if contexts_col not in reader.fieldnames:
                 print(f"[WARN] contexts column '{contexts_col}' not found in input. Available columns: {reader.fieldnames}")
-                # allow, will treat as empty contexts
             for current_input_idx, raw_row in enumerate(reader):
                 if current_input_idx < start_row:
-                    continue  # skip already-processed input rows
-                # Process this input row
+                    continue
                 sample_idx = current_input_idx
                 question = raw_row.get("question", "")
                 answer = raw_row.get("answer", "")
@@ -222,13 +188,11 @@ def process_stream(input_csv: str, out_csv: str, contexts_col: str = "contexts",
                             "context_text": "",
                             "context_source": ""
                         })
-                # append to out CSV immediately
                 if out_rows:
                     append_rows(out_csv, out_rows, out_fields, encoding=encoding)
 
                 total_processed += 1
 
-                # checkpointing: save next_row = current_input_idx + 1
                 if (total_processed % checkpoint_interval) == 0:
                     next_row = current_input_idx + 1
                     save_checkpoint(checkpoint_file, next_row)
@@ -236,13 +200,11 @@ def process_stream(input_csv: str, out_csv: str, contexts_col: str = "contexts",
                     print(f"[INFO] checkpoint saved at next_row={next_row} (processed {total_processed} rows this run)")
 
     except KeyboardInterrupt:
-        # on ctrl-c, save checkpoint and exit gracefully
         next_row = current_input_idx + 1
         save_checkpoint(checkpoint_file, next_row)
         print(f"\n[INTERRUPT] KeyboardInterrupt caught. Checkpoint saved at next_row={next_row}. You can resume with --resume True.")
         return
     except Exception as e:
-        # save checkpoint to avoid reprocessing everything
         next_row = current_input_idx + 1 if current_input_idx >= 0 else start_row
         try:
             save_checkpoint(checkpoint_file, next_row)
@@ -251,7 +213,6 @@ def process_stream(input_csv: str, out_csv: str, contexts_col: str = "contexts",
             print(f"[ERROR] Exception while saving checkpoint: {e}. Exiting without checkpoint.")
         raise
 
-    # finish: save final checkpoint = EOF (next_row = current_input_idx + 1)
     final_next = current_input_idx + 1 if current_input_idx >= 0 else start_row
     save_checkpoint(checkpoint_file, final_next)
     print(f"[DONE] Finished processing. Final checkpoint next_row={final_next}. Output: {out_csv}")

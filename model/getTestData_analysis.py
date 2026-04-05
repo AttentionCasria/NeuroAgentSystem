@@ -1,21 +1,4 @@
-# getTestData_analysis.py
-"""
-Medical Agent evaluator + analysis (CMB-Clin friendly, debug-capable)
 
-功能一览：
-- 加载 FreedomIntelligence/CMB CMB-Clin（test split）
-- 支持关键词筛选、QA 回退、可选 AUTO_GROUND_TRUTH（调试）
-- 调用 Agent 生成回答并保存 eval_samples
-- 调用 Ragas 进行自动化评分（如配置了 judge LLM / embeddings）
-- **新增数据分析：**
-  - 样本计数、GT 提取命中率
-  - 常见 GT 词频（Top N）
-  - Agent 回答长度分布、contexts 数量分布、GT 长度分布
-  - 检索来源文档分布（若 contexts 中包含 source 字段或 filename）
-  - 将所有分析结果存为: analysis_summary.json, analysis_report.md, 多张 PNG 图表
-- 导出文件：medical_agent_eval_details.csv, skipped_samples_debug.csv, raw_samples_debug.json,
-  analysis_summary.json, analysis_report.md, 图表保存在 analysis_plots/
-"""
 
 import os
 import argparse
@@ -32,7 +15,6 @@ from ragas.metrics.collections import faithfulness, answer_relevancy, context_pr
 
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
-# -------- Judge config (按环境变量) ----------
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK-API-KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_API_BASE_URL = os.getenv("OPENAI_API_BASE")
@@ -50,11 +32,9 @@ judge_embeddings = OpenAIEmbeddings(
     base_url=OPENAI_API_BASE_URL
 )
 
-# -------- Logging ----------
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("MedicalEvaluatorAnalysis")
 
-# -------- Utilities ----------
 def safe_text(x):
     if x is None:
         return ""
@@ -128,22 +108,16 @@ def build_question_from_case(case, prompt_variant=1):
 """
     return question_text
 
-# -------- Analysis helpers ----------
 def ensure_dir(path):
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
 
 def analyze_eval_samples(eval_samples, out_dir="analysis_plots", top_n=20):
-    """
-    eval_samples: list of dicts with keys: question, answer, contexts, ground_truth, optionally gt_fields
-    returns: analysis dict, and saves PNGs/MD/JSON
-    """
     ensure_dir(out_dir)
     n = len(eval_samples)
     analysis = {}
     analysis['n_samples'] = n
 
-    # GT presence
     gt_counts = 0
     auto_gt_counts = 0
     gt_field_counter = Counter()
@@ -157,7 +131,6 @@ def analyze_eval_samples(eval_samples, out_dir="analysis_plots", top_n=20):
             gt_counts += 1
             for gt in gts:
                 gt_texts.append(gt)
-        # record fields if present
         if s.get("gt_extracted_from_fields"):
             for f in s["gt_extracted_from_fields"]:
                 gt_field_counter[f] += 1
@@ -168,7 +141,6 @@ def analyze_eval_samples(eval_samples, out_dir="analysis_plots", top_n=20):
     analysis['auto_gt_rate'] = auto_gt_counts / n if n else 0
     analysis['gt_field_distribution'] = gt_field_counter.most_common()
 
-    # Top GT terms (simple tokenization by splitting on common delimiters)
     token_counter = Counter()
     for t in gt_texts:
         for tok in [x.strip().lower() for x in re_split_tokens(t)]:
@@ -176,7 +148,6 @@ def analyze_eval_samples(eval_samples, out_dir="analysis_plots", top_n=20):
                 token_counter[tok] += 1
     analysis['top_gt_terms'] = token_counter.most_common(top_n)
 
-    # Lengths: answer lengths, gt lengths, contexts count
     answer_lens = []
     gt_lens = []
     context_counts = []
@@ -185,34 +156,27 @@ def analyze_eval_samples(eval_samples, out_dir="analysis_plots", top_n=20):
         ans = safe_text(s.get("answer", ""))
         answer_lens.append(len(ans))
         gts = s.get("ground_truth", [])
-        # compute avg length of GT text concatenated
         gt_concat = " ".join(gts) if isinstance(gts, list) else safe_text(gts)
         gt_lens.append(len(gt_concat))
         ctxs = s.get("contexts", []) or []
-        # contexts may be list of strings or list of dicts with 'source'/'filename'
         if isinstance(ctxs, list):
             context_counts.append(len(ctxs))
             for c in ctxs:
                 if isinstance(c, dict):
-                    # try to find keys holding source
                     for key in ("source", "filename", "doc", "title"):
                         if key in c and c.get(key):
                             context_source_counter[safe_text(c.get(key))] += 1
                             break
                 elif isinstance(c, str):
-                    # cannot parse source, skip
                     pass
         else:
             context_counts.append(0)
 
-    # Basic stats
     analysis['answer_len_stats'] = numeric_stats(answer_lens)
     analysis['gt_len_stats'] = numeric_stats(gt_lens)
     analysis['context_count_stats'] = numeric_stats(context_counts)
     analysis['top_context_sources'] = context_source_counter.most_common(30)
 
-    # Save distributions plots
-    # 1) answer length histogram
     if answer_lens:
         plt.figure()
         plt.hist(answer_lens, bins='auto')
@@ -225,7 +189,6 @@ def analyze_eval_samples(eval_samples, out_dir="analysis_plots", top_n=20):
         plt.close()
         analysis['answer_length_plot'] = p1
 
-    # 2) GT length histogram
     if gt_lens:
         plt.figure()
         plt.hist(gt_lens, bins='auto')
@@ -238,7 +201,6 @@ def analyze_eval_samples(eval_samples, out_dir="analysis_plots", top_n=20):
         plt.close()
         analysis['gt_length_plot'] = p2
 
-    # 3) context count histogram
     if context_counts:
         plt.figure()
         plt.hist(context_counts, bins=range(0, max(context_counts)+2))
@@ -251,7 +213,6 @@ def analyze_eval_samples(eval_samples, out_dir="analysis_plots", top_n=20):
         plt.close()
         analysis['context_count_plot'] = p3
 
-    # 4) top GT terms bar chart
     if analysis['top_gt_terms']:
         keys = [k for k,_ in analysis['top_gt_terms'][:top_n]]
         vals = [v for _,v in analysis['top_gt_terms'][:top_n]]
@@ -269,10 +230,6 @@ def analyze_eval_samples(eval_samples, out_dir="analysis_plots", top_n=20):
     return analysis
 
 def re_split_tokens(s):
-    """
-    Simple splitter: split on whitespace and punctuation, keep medically meaningful chunks.
-    """
-    # keep alphanum and chinese chars
     import re
     toks = re.split(r"[,\s;:/()\\\[\]\{\}<>，。；：、\t\n]+", s)
     toks = [t for t in toks if t]
@@ -291,7 +248,6 @@ def numeric_stats(lst):
         "stdev": statistics.pstdev(lst) if len(lst) > 1 else 0
     }
 
-# -------- Core evaluation (with debug + analysis) ----------
 def main_eval(test_count=3, keywords=None, dataset_name="FreedomIntelligence/CMB", subset="CMB-Clin",
               allow_no_gt=False, debug_save_raw=0, do_analysis=True):
     logger.info("初始化 qwenAgent ...")
@@ -313,7 +269,6 @@ def main_eval(test_count=3, keywords=None, dataset_name="FreedomIntelligence/CMB
     skipped_debug = []
     processed = 0
 
-    # 保存原始前几条样本做离线检查
     if debug_save_raw and debug_save_raw > 0:
         raw_list = [dict(raw_ds[i]) for i in range(min(len(raw_ds), debug_save_raw))]
         with open("raw_samples_debug.json", "w", encoding="utf-8") as f:
@@ -336,7 +291,6 @@ def main_eval(test_count=3, keywords=None, dataset_name="FreedomIntelligence/CMB
             })
             continue
 
-        # QA 回退
         if case.get("QA"):
             qas = case.get("QA") or []
             for qa in qas:
@@ -370,7 +324,6 @@ def main_eval(test_count=3, keywords=None, dataset_name="FreedomIntelligence/CMB
                 processed += 1
             continue
 
-        # Case -> diagnosis 流程
         question_text = build_question_from_case(case, prompt_variant=1)
         logger.info("Case 模式: dataset idx %d | 准备运行 Agent (第 %d 题)", idx, processed + 1)
         try:
@@ -415,7 +368,6 @@ def main_eval(test_count=3, keywords=None, dataset_name="FreedomIntelligence/CMB
             logger.info("skipped_debug 为空，说明关键词过滤可能过滤掉了全部样本，请检查 keywords 或 dataset。")
         return
 
-    # Ragas 评测
     logger.info("使用 Ragas 对 %d 条样本进行自动化评分...", len(eval_samples))
     eval_dataset = Dataset.from_pandas(pd.DataFrame(eval_samples))
     try:
@@ -429,7 +381,6 @@ def main_eval(test_count=3, keywords=None, dataset_name="FreedomIntelligence/CMB
         logger.error("Ragas evaluate 出错: %s", e)
         raise
 
-    # 保存明细（result 可能含 to_pandas）
     try:
         if hasattr(result, "to_pandas"):
             df_result = result.to_pandas()
@@ -441,21 +392,16 @@ def main_eval(test_count=3, keywords=None, dataset_name="FreedomIntelligence/CMB
     except Exception as e:
         logger.error("保存 CSV 出错: %s", e)
 
-    # 保存 skipped_debug 便于事后分析
     if skipped_debug:
         pd.DataFrame(skipped_debug).to_csv("skipped_samples_debug.csv", index=False, encoding="utf-8-sig")
         logger.info("已保存 skipped_samples_debug.csv (%d 条)", len(skipped_debug))
 
-    # ---------------- 数据分析 ----------------
     if do_analysis:
         logger.info("开始数据分析...")
         analysis = analyze_eval_samples(eval_samples, out_dir="analysis_plots", top_n=30)
-        # 保存 analysis summary JSON
         with open("analysis_summary.json", "w", encoding="utf-8") as f:
             json.dump(analysis, f, ensure_ascii=False, indent=2)
         logger.info("已保存 analysis_summary.json")
-
-        # 生成简单 Markdown 报告
         md_lines = []
         md_lines.append("# Evaluator Analysis Report\n")
         md_lines.append(f"- 样本数: **{analysis.get('n_samples',0)}**")
