@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import VuePdfEmbed from 'vue-pdf-embed'
 // 配置 pdfjs worker（Vite 兼容写法）
 import * as pdfjsLib from 'pdfjs-dist'
@@ -19,31 +19,156 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
+const MAX_DOCUMENT_WIDTH = 960
+const VIEWPORT_SIDE_ALLOWANCE = 56
+const MIN_DOCUMENT_WIDTH = 240
+const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2]
+
 const currentPage = ref(1)
 const totalPages = ref(0)
 const loading = ref(true)
+const zoomLevel = ref(1)
+const bodyRef = ref(null)
+const baseDocumentWidth = ref(MAX_DOCUMENT_WIDTH)
 
-// 每次弹窗打开时重置状态
-watch(() => props.visible, (val) => {
-  if (val) {
-    currentPage.value = 1
-    totalPages.value = 0
-    loading.value = true
-  }
+let resizeObserver = null
+let resizeFrame = 0
+
+const documentWidth = computed(() => {
+  return Math.max(MIN_DOCUMENT_WIDTH, Math.round(baseDocumentWidth.value * zoomLevel.value))
 })
 
-function onRendered(pdf) {
+const zoomText = computed(() => `${Math.round(zoomLevel.value * 100)}%`)
+const canZoomOut = computed(() => zoomLevel.value > ZOOM_LEVELS[0])
+const canZoomIn = computed(() => zoomLevel.value < ZOOM_LEVELS[ZOOM_LEVELS.length - 1])
+
+function resetState() {
+  currentPage.value = 1
+  totalPages.value = 0
+  loading.value = true
+  zoomLevel.value = 1
+}
+
+function updateBaseDocumentWidth() {
+  const viewport = bodyRef.value
+
+  if (!viewport) return
+
+  const availableWidth = Math.max(
+    MIN_DOCUMENT_WIDTH,
+    viewport.clientWidth - VIEWPORT_SIDE_ALLOWANCE
+  )
+
+  baseDocumentWidth.value = Math.min(MAX_DOCUMENT_WIDTH, availableWidth)
+}
+
+function scheduleLayoutUpdate() {
+  if (resizeFrame) cancelAnimationFrame(resizeFrame)
+
+  resizeFrame = requestAnimationFrame(() => {
+    resizeFrame = 0
+    updateBaseDocumentWidth()
+    updateCurrentPageFromScroll()
+  })
+}
+
+function setupResizeObserver() {
+  if (!bodyRef.value || resizeObserver) return
+
+  resizeObserver = new ResizeObserver(() => {
+    scheduleLayoutUpdate()
+  })
+
+  resizeObserver.observe(bodyRef.value)
+}
+
+function cleanupResizeObserver() {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+
+  if (resizeFrame) {
+    cancelAnimationFrame(resizeFrame)
+    resizeFrame = 0
+  }
+}
+
+function updateCurrentPageFromScroll() {
+  const viewport = bodyRef.value
+
+  if (!viewport || !totalPages.value) return
+
+  const pages = viewport.querySelectorAll('.vue-pdf-embed__page')
+
+  if (!pages.length) return
+
+  const viewportTop = viewport.getBoundingClientRect().top
+  let activePage = 1
+
+  pages.forEach((pageElement, index) => {
+    const { top } = pageElement.getBoundingClientRect()
+
+    if (top - viewportTop <= 32) {
+      activePage = index + 1
+    }
+  })
+
+  currentPage.value = activePage
+}
+
+function setZoomLevel(nextZoom) {
+  zoomLevel.value = nextZoom
+}
+
+function zoomOut() {
+  const currentIndex = ZOOM_LEVELS.indexOf(zoomLevel.value)
+
+  if (currentIndex > 0) {
+    setZoomLevel(ZOOM_LEVELS[currentIndex - 1])
+  }
+}
+
+function zoomIn() {
+  const currentIndex = ZOOM_LEVELS.indexOf(zoomLevel.value)
+
+  if (currentIndex < ZOOM_LEVELS.length - 1) {
+    setZoomLevel(ZOOM_LEVELS[currentIndex + 1])
+  }
+}
+
+function resetZoom() {
+  setZoomLevel(1)
+}
+
+// 每次弹窗打开时重置状态
+watch(
+  [() => props.visible, () => props.url],
+  async ([visible]) => {
+    if (!visible) {
+      cleanupResizeObserver()
+      return
+    }
+
+    resetState()
+    await nextTick()
+    updateBaseDocumentWidth()
+    setupResizeObserver()
+  },
+  { immediate: true }
+)
+
+function onLoaded(pdf) {
   // vue-pdf-embed v2 的 loaded 事件传入的是 PDF 文档对象，总页数通过 numPages 取得
   totalPages.value = pdf?.numPages ?? 0
+}
+
+function onRendered() {
   loading.value = false
-}
 
-function prevPage() {
-  if (currentPage.value > 1) currentPage.value--
-}
-
-function nextPage() {
-  if (currentPage.value < totalPages.value) currentPage.value++
+  nextTick(() => {
+    updateCurrentPageFromScroll()
+  })
 }
 
 function handleDownload() {
@@ -55,6 +180,10 @@ function handleDownload() {
 function handleBackdropClick(e) {
   if (e.target === e.currentTarget) emit('close')
 }
+
+onBeforeUnmount(() => {
+  cleanupResizeObserver()
+})
 </script>
 
 <template>
@@ -71,20 +200,24 @@ function handleBackdropClick(e) {
         </div>
 
         <!-- PDF 渲染区 -->
-        <div class="pdf-modal-body">
+        <div ref="bodyRef" class="pdf-modal-body" @scroll="updateCurrentPageFromScroll">
           <div class="pdf-document-shell">
             <div v-if="loading" class="pdf-loading">正在加载 PDF...</div>
-            <VuePdfEmbed v-if="url" class="pdf-document" :source="url" :page="currentPage" @loaded="onRendered" />
+            <VuePdfEmbed v-if="url" class="pdf-document" :source="url" :width="documentWidth" @loaded="onLoaded"
+              @rendered="onRendered" />
           </div>
         </div>
 
-        <!-- 翻页栏 -->
+        <!-- 工具栏 -->
         <div class="pdf-modal-footer">
-          <button type="button" class="pdf-btn" :disabled="currentPage <= 1" @click="prevPage">上一页</button>
           <span class="pdf-page-info">
-            {{ totalPages ? `第 ${currentPage} / ${totalPages} 页` : '加载中...' }}
+            {{ totalPages ? `第 ${currentPage} / ${totalPages} 页 · 连续滚动` : '加载中...' }}
           </span>
-          <button type="button" class="pdf-btn" :disabled="currentPage >= totalPages" @click="nextPage">下一页</button>
+          <div class="pdf-zoom-controls">
+            <button type="button" class="pdf-btn" :disabled="!canZoomOut" @click="zoomOut">缩小</button>
+            <button type="button" class="pdf-btn" @click="resetZoom">{{ zoomText }}</button>
+            <button type="button" class="pdf-btn" :disabled="!canZoomIn" @click="zoomIn">放大</button>
+          </div>
         </div>
       </div>
     </div>
@@ -142,26 +275,26 @@ function handleBackdropClick(e) {
 
 .pdf-modal-body {
   flex: 1;
-  overflow-y: auto;
+  overflow: auto;
   background: var(--color-pdf-surface);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   padding: 16px;
   position: relative;
 }
 
 .pdf-document-shell {
   position: relative;
-  width: 100%;
+  width: fit-content;
+  min-width: 100%;
   min-height: 100%;
   display: flex;
   justify-content: center;
+  margin: 0 auto;
 }
 
 .pdf-document {
-  width: min-content;
-  max-width: 100%;
+  width: fit-content;
+  max-width: none;
+  flex: 0 0 auto;
 }
 
 .pdf-document :deep(.vue-pdf-embed__page) {
@@ -179,7 +312,7 @@ function handleBackdropClick(e) {
 
 .pdf-document :deep(canvas) {
   display: block;
-  max-width: 100%;
+  width: 100%;
   height: auto;
   border-radius: 12px;
   filter: var(--filter-pdf-page);
@@ -199,19 +332,25 @@ function handleBackdropClick(e) {
 .pdf-modal-footer {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 16px;
   padding: 12px 18px;
   border-top: 1px solid var(--color-border-light);
   background: var(--color-pdf-toolbar-bg);
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .pdf-page-info {
   font-size: 14px;
   color: var(--color-text-medium);
-  min-width: 120px;
-  text-align: center;
+  min-width: 160px;
+}
+
+.pdf-zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .pdf-btn {
@@ -237,5 +376,31 @@ function handleBackdropClick(e) {
 .pdf-btn.close {
   border-color: var(--color-border-light);
   color: var(--color-text-weak);
+}
+
+@media (max-width: 640px) {
+  .pdf-modal {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .pdf-modal-header,
+  .pdf-modal-footer {
+    padding: 12px;
+  }
+
+  .pdf-modal-body {
+    padding: 12px;
+  }
+
+  .pdf-modal-footer {
+    justify-content: center;
+  }
+
+  .pdf-page-info {
+    width: 100%;
+    text-align: center;
+  }
 }
 </style>
