@@ -9,8 +9,15 @@ from langchain_core.embeddings import Embeddings
 from http import HTTPStatus
 import dashscope
 from langchain_core.documents import Document
-from langchain_chroma import Chroma
 from langchain_community.retrievers import BM25Retriever
+
+# Monkey-patch chromadb to prevent ONNX embedding function initialization
+import sys
+import chromadb.utils.embedding_functions as ef_module
+original_default = ef_module.DefaultEmbeddingFunction
+ef_module.DefaultEmbeddingFunction = lambda: None
+
+from langchain_chroma import Chroma
 
 # Add parent directory to path to absolute imports work
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -22,9 +29,10 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 CONFIG = {
-    "persist_dir": "./chroma_db_unified",
-    "docs_dir": "./Data/documents",
+    "persist_dir": os.path.join(os.path.dirname(os.path.dirname(__file__)), "chroma_db_unified"),
+    "docs_dir": os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "Data", "documents"),
     "top_k_per_store": 4,
+    "enable_qa_generation": True,
 }
 
 

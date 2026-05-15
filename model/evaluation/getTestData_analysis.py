@@ -250,13 +250,13 @@ def numeric_stats(lst):
 
 def main_eval(test_count=3, keywords=None, dataset_name="FreedomIntelligence/CMB", subset="CMB-Clin",
               allow_no_gt=False, debug_save_raw=0, do_analysis=True):
-    logger.info("初始化 qwenAgent ...")
+    logger.info("初始化 QwenAgent ...")
     try:
-        from app.agents.qwen.qwenAgent import qwenAgent
+        from app.agents.orchestrators.qwen_agent import QwenAgent
     except Exception as e:
-        logger.error("无法导入 qwenAgent: %s", e)
+        logger.error("无法导入 QwenAgent: %s", e)
         raise
-    agent = qwenAgent()
+    agent = QwenAgent()
 
     logger.info("加载数据集: %s / %s", dataset_name, subset)
     raw_ds = load_dataset(dataset_name, subset, split="test")

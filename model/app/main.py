@@ -13,10 +13,10 @@ from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 import uvicorn
 
-from app.agents.qwen.qwen_agent import qwenAgent
+from app.agents.assistant import MedicalAssistant
 from app.agents.bailian.health_risk_analyzer import HealthRiskAnalyzer
 from app.services.pubmed_service import PubMedService
-from app.agents.qwen.qwen_assistant import MedicalAssistant
+from app.agents.orchestrators.qwen_agent import QwenAgent
 from app.utils.error_codes import build_error_event, format_error_log
 from app.utils.naming_model import NamingModel
 from app.rag.retrieve import UnifiedSearchEngine, CONFIG
@@ -110,7 +110,7 @@ def init_all_resources():
         report_manager=report_mgr
     )
 
-    agent = qwenAgent(
+    agent = QwenAgent(
         llm_proposer=llm_max,
         llm_critic=llm_plus,
         medical_assistant=medical_assistant,

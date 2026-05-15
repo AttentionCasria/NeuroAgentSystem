@@ -362,8 +362,8 @@ def main():
     args = parser.parse_args()
 
     if not args.eval_only:
-        from app.agents.qwen.qwenAgent import qwenAgent
-        agent = qwenAgent()
+        from app.agents.orchestrators.qwen_agent import QwenAgent
+        agent = QwenAgent()
         generate_samples(
             agent,
             test_count=args.test_count,
@@ -376,5 +376,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
